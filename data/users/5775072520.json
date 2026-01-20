@@ -1,0 +1,96 @@
+{
+  "user_id": 5775072520,
+  "username": "BEHZOD_SAFAROV",
+  "created_at": "2026-01-20T19:09:30.321112",
+  "last_active": "2026-01-20T19:13:34.866396",
+  "settings": {
+    "daily_new_words": 10,
+    "daily_review_words": 20,
+    "notifications_enabled": true,
+    "notification_time": "09:00"
+  },
+  "stats": {
+    "total_words_learned": 0,
+    "total_reviews": 9,
+    "total_tests_taken": 2,
+    "correct_answers": 3,
+    "wrong_answers": 6,
+    "current_streak": 1,
+    "longest_streak": 1,
+    "last_study_date": "2026-01-20"
+  },
+  "custom_vocabulary": [],
+  "words_4000_progress": {
+    "current_level": 1,
+    "current_unit": 1,
+    "completed_units": [],
+    "word_status": {
+      "L1U1W4": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 1,
+        "ease_factor": 2.5,
+        "interval": 1,
+        "last_review": "2026-01-20T19:11:08.408532",
+        "next_review": "2026-01-21T19:11:08.408543"
+      },
+      "L1U1W16": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 1,
+        "ease_factor": 2.5,
+        "interval": 1,
+        "last_review": "2026-01-20T19:11:30.410573",
+        "next_review": "2026-01-21T19:11:30.410585"
+      },
+      "L1U1W19": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 0,
+        "ease_factor": 2.3,
+        "interval": 1,
+        "last_review": "2026-01-20T19:11:59.599463",
+        "next_review": "2026-01-21T19:11:59.599474"
+      },
+      "L4U9W10": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 1,
+        "ease_factor": 2.5,
+        "interval": 1,
+        "last_review": "2026-01-20T19:13:07.397936",
+        "next_review": "2026-01-21T19:13:07.397942"
+      },
+      "L4U25W3": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 0,
+        "ease_factor": 2.3,
+        "interval": 1,
+        "last_review": "2026-01-20T19:13:17.352626",
+        "next_review": "2026-01-21T19:13:17.352635"
+      },
+      "L4U14W10": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 0,
+        "ease_factor": 2.3,
+        "interval": 1,
+        "last_review": "2026-01-20T19:13:21.182172",
+        "next_review": "2026-01-21T19:13:21.182179"
+      },
+      "L4U17W13": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 0,
+        "ease_factor": 2.3,
+        "interval": 1,
+        "last_review": "2026-01-20T19:13:24.064720",
+        "next_review": "2026-01-21T19:13:24.064726"
+      }
+    }
+  },
+  "review_queue": [],
+  "learning_session": null,
+  "test_session": null
+}
