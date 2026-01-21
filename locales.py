@@ -951,6 +951,11 @@ Ko'proq yordam kerakmi? Shunchaki o'rganishni boshlang! 📚
         "uz": "Tez orada!",
         "ru": "Скоро!",
     },
+    "admin_only": {
+        "en": "⛔ This command is for administrators only.",
+        "uz": "⛔ Bu buyruq faqat administratorlar uchun.",
+        "ru": "⛔ Эта команда только для администраторов.",
+    },
     
     # ============ Test Results ============
     "test_question_progress": {

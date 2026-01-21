@@ -7,6 +7,10 @@ import os
 # BOT_TOKEN = os.getenv("BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
 BOT_TOKEN = "8382488484:AAG0puO_YjKH52rqtPeFfyij4S7L05JJoYo"
 
+# Admin Settings - Add your Telegram user ID(s) here
+# You can get your ID by messaging @userinfobot on Telegram
+ADMIN_IDS = [5775072520]  # Add admin user IDs here
+
 # Data directories
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")

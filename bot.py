@@ -13,7 +13,7 @@ import config
 from storage.json_storage import ensure_directories
 
 # Import all handlers
-from handlers import start, learn, test, review, stats, words_4000, settings
+from handlers import start, learn, test, review, stats, words_4000, settings, admin
 
 # Configure logging
 logging.basicConfig(
@@ -50,6 +50,7 @@ async def main():
     dp.include_router(stats.router)
     dp.include_router(words_4000.router)
     dp.include_router(settings.router)
+    dp.include_router(admin.router)
     
     logger.info("Starting Vocabulary Learning Bot...")
     
