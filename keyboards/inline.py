@@ -79,7 +79,7 @@ def get_level_selection_keyboard(for_action: str = "learn", lang: str = "en") ->
             if level <= config.LEVELS:
                 row_buttons.append(
                     InlineKeyboardButton(
-                        text=f"📘 Level {level}",
+                        text=f"📘 {get_text('level', lang)} {level}",
                         callback_data=f"{for_action}:level:{level}"
                     )
                 )
@@ -124,7 +124,7 @@ def get_unit_selection_keyboard(
     if page > 0:
         nav_buttons.append(
             InlineKeyboardButton(
-                text="◀️ Prev",
+                text=get_text("btn_prev_page", lang),
                 callback_data=f"{for_action}:level:{level}:page:{page-1}"
             )
         )
@@ -133,7 +133,7 @@ def get_unit_selection_keyboard(
     if page < total_pages - 1:
         nav_buttons.append(
             InlineKeyboardButton(
-                text="Next ▶️",
+                text=get_text("btn_next_page", lang),
                 callback_data=f"{for_action}:level:{level}:page:{page+1}"
             )
         )
@@ -206,16 +206,16 @@ def get_test_menu_keyboard(lang: str = "en") -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     
     builder.row(
-        InlineKeyboardButton(text="📝 Unit Test", callback_data="test:unit"),
+        InlineKeyboardButton(text=get_text("btn_unit_test", lang), callback_data="test:unit"),
     )
     builder.row(
-        InlineKeyboardButton(text="📚 Level Test", callback_data="test:level"),
+        InlineKeyboardButton(text=get_text("btn_level_test_menu", lang), callback_data="test:level"),
     )
     builder.row(
-        InlineKeyboardButton(text="🔄 Review Test", callback_data="test:review"),
+        InlineKeyboardButton(text=get_text("btn_review_test", lang), callback_data="test:review"),
     )
     builder.row(
-        InlineKeyboardButton(text="✏️ Custom Words Test", callback_data="test:custom"),
+        InlineKeyboardButton(text=get_text("btn_custom_test", lang), callback_data="test:custom"),
     )
     builder.row(
         InlineKeyboardButton(text=get_text("btn_main_menu", lang), callback_data="menu:main"),
@@ -243,8 +243,8 @@ def get_quiz_answer_keyboard(
         )
     
     builder.row(
-        InlineKeyboardButton(text="💡 Hint", callback_data=f"quiz:hint:{question_id}"),
-        InlineKeyboardButton(text="⏭ Skip", callback_data=f"quiz:skip:{question_id}"),
+        InlineKeyboardButton(text=get_text("btn_hint", lang), callback_data=f"quiz:hint:{question_id}"),
+        InlineKeyboardButton(text=get_text("btn_skip", lang), callback_data=f"quiz:skip:{question_id}"),
     )
     
     return builder.as_markup()
@@ -258,7 +258,7 @@ def get_quiz_continue_keyboard(is_correct: bool, lang: str = "en") -> InlineKeyb
         InlineKeyboardButton(text=get_text("btn_next_question", lang), callback_data="quiz:next"),
     )
     builder.row(
-        InlineKeyboardButton(text="🏁 End Test", callback_data="quiz:end"),
+        InlineKeyboardButton(text=get_text("btn_end_test", lang), callback_data="quiz:end"),
     )
     
     return builder.as_markup()
@@ -269,11 +269,11 @@ def get_test_result_keyboard(lang: str = "en") -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     
     builder.row(
-        InlineKeyboardButton(text="🔄 Retry Test", callback_data="test:retry"),
-        InlineKeyboardButton(text="📊 View Details", callback_data="test:details"),
+        InlineKeyboardButton(text=get_text("btn_retry_test", lang), callback_data="test:retry"),
+        InlineKeyboardButton(text=get_text("btn_view_details", lang), callback_data="test:details"),
     )
     builder.row(
-        InlineKeyboardButton(text="📝 New Test", callback_data="menu:test"),
+        InlineKeyboardButton(text=get_text("btn_new_test", lang), callback_data="menu:test"),
     )
     builder.row(
         InlineKeyboardButton(text=get_text("btn_main_menu", lang), callback_data="menu:main"),
@@ -288,7 +288,10 @@ def get_review_menu_keyboard(due_count: int = 0, lang: str = "en") -> InlineKeyb
     """Review options menu"""
     builder = InlineKeyboardBuilder()
     
-    due_text = f"🔄 Start Review ({due_count} due)" if due_count > 0 else "🔄 Start Review"
+    if due_count > 0:
+        due_text = get_text("btn_start_review_due", lang).format(count=due_count)
+    else:
+        due_text = get_text("btn_start_review", lang)
     
     builder.row(
         InlineKeyboardButton(text=due_text, callback_data="review:start"),
@@ -297,7 +300,7 @@ def get_review_menu_keyboard(due_count: int = 0, lang: str = "en") -> InlineKeyb
         InlineKeyboardButton(text=get_text("btn_review_weak", lang), callback_data="review:weak"),
     )
     builder.row(
-        InlineKeyboardButton(text="📅 Schedule", callback_data="review:schedule"),
+        InlineKeyboardButton(text=get_text("btn_schedule", lang), callback_data="review:schedule"),
     )
     builder.row(
         InlineKeyboardButton(text=get_text("btn_main_menu", lang), callback_data="menu:main"),
@@ -313,16 +316,16 @@ def get_stats_menu_keyboard(lang: str = "en") -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     
     builder.row(
-        InlineKeyboardButton(text="📊 Overall Stats", callback_data="stats:overall"),
+        InlineKeyboardButton(text=get_text("btn_overall_stats", lang), callback_data="stats:overall"),
     )
     builder.row(
-        InlineKeyboardButton(text="📘 Level Progress", callback_data="stats:levels"),
+        InlineKeyboardButton(text=get_text("btn_level_progress", lang), callback_data="stats:levels"),
     )
     builder.row(
-        InlineKeyboardButton(text="🔥 Streak Info", callback_data="stats:streak"),
+        InlineKeyboardButton(text=get_text("btn_streak_info", lang), callback_data="stats:streak"),
     )
     builder.row(
-        InlineKeyboardButton(text="⚠️ Weak Words", callback_data="stats:weak"),
+        InlineKeyboardButton(text=get_text("btn_weak_words_stats", lang), callback_data="stats:weak"),
     )
     builder.row(
         InlineKeyboardButton(text=get_text("btn_main_menu", lang), callback_data="menu:main"),
@@ -342,7 +345,7 @@ def get_level_stats_keyboard(lang: str = "en") -> InlineKeyboardMarkup:
             if level <= config.LEVELS:
                 row_buttons.append(
                     InlineKeyboardButton(
-                        text=f"Level {level}",
+                        text=f"{get_text('level', lang)} {level}",
                         callback_data=f"stats:level:{level}"
                     )
                 )
@@ -535,11 +538,11 @@ def get_confirm_keyboard(action: str, item_id: str, lang: str = "en") -> InlineK
     
     builder.row(
         InlineKeyboardButton(
-            text="✅ Confirm",
+            text=get_text("btn_confirm", lang),
             callback_data=f"confirm:{action}:{item_id}"
         ),
         InlineKeyboardButton(
-            text="❌ Cancel",
+            text=get_text("btn_cancel", lang),
             callback_data=f"cancel:{action}:{item_id}"
         ),
     )

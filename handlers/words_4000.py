@@ -15,7 +15,7 @@ from keyboards.inline import (
     get_unit_selection_keyboard,
     get_back_button,
 )
-from utils.helpers import get_level_description
+from utils.helpers import get_level_description, safe_edit_text
 from locales import get_text
 import config
 
@@ -51,7 +51,8 @@ async def show_4000_menu(callback: CallbackQuery):
     user_id = callback.from_user.id
     lang, trans_lang = await get_user_settings(user_id)
     
-    await callback.message.edit_text(
+    await safe_edit_text(
+        callback.message,
         get_text("4000_words_menu", lang),
         parse_mode="Markdown",
         reply_markup=get_4000_words_menu_keyboard(lang)
@@ -85,7 +86,8 @@ async def browse_levels(callback: CallbackQuery):
         lines.append(f"*{get_text('level', lang)} {level}*: {bar} {pct:.0f}%")
         lines.append(f"_{desc}_\n")
     
-    await callback.message.edit_text(
+    await safe_edit_text(
+        callback.message,
         "\n".join(lines),
         parse_mode="Markdown",
         reply_markup=get_level_selection_keyboard("browse", lang)
@@ -111,7 +113,8 @@ async def browse_level_units(callback: CallbackQuery):
     
     desc = get_level_description(level)
     
-    await callback.message.edit_text(
+    await safe_edit_text(
+        callback.message,
         f"📘 *{get_text('level', lang)} {level}*\n"
         f"_{desc}_\n\n"
         f"📊 {get_text('progress', lang)}: {progress['completion_rate']:.1f}%\n"
@@ -120,7 +123,7 @@ async def browse_level_units(callback: CallbackQuery):
         f"⚠️ {get_text('weak', lang)}: {progress['weak']}\n\n"
         f"{get_text('select_unit', lang)}:",
         parse_mode="Markdown",
-        reply_markup=get_unit_selection_keyboard(level, "browse", page, lang)
+        reply_markup=get_unit_selection_keyboard(level, "browse", page, lang=lang)
     )
     await callback.answer()
 
@@ -143,7 +146,8 @@ async def browse_unit_words(callback: CallbackQuery):
     words = await vocab_manager.get_4000_unit_words(level, unit)
     
     if not words:
-        await callback.message.edit_text(
+        await safe_edit_text(
+            callback.message,
             get_text("error_no_words", lang, level=level, unit=unit),
             reply_markup=get_back_button(f"browse:level:{level}", lang)
         )
@@ -161,7 +165,8 @@ async def browse_unit_words(callback: CallbackQuery):
     if len(words) > 10:
         word_list.append(f"...{get_text('and_more', lang, count=len(words) - 10)}")
     
-    await callback.message.edit_text(
+    await safe_edit_text(
+        callback.message,
         f"📗 *{get_text('level', lang)} {level} • {get_text('unit', lang)} {unit}*\n\n"
         f"📊 {get_text('progress', lang)}: {progress['completion_rate']:.1f}%\n"
         f"📚 {get_text('words', lang)}: {progress['total']}\n"
@@ -188,7 +193,8 @@ async def continue_learning(callback: CallbackQuery):
     current_level = progress.get("current_level", 1)
     current_unit = progress.get("current_unit", 1)
     
-    await callback.message.edit_text(
+    await safe_edit_text(
+        callback.message,
         get_text("continue_learning", lang, level=current_level, unit=current_unit),
         parse_mode="Markdown",
         reply_markup=get_back_button(f"learn:L{current_level}U{current_unit}", lang)
@@ -204,7 +210,8 @@ async def test_4000(callback: CallbackQuery):
     
     from keyboards.inline import get_test_menu_keyboard
     
-    await callback.message.edit_text(
+    await safe_edit_text(
+        callback.message,
         get_text("4000_test_title", lang),
         parse_mode="Markdown",
         reply_markup=get_test_menu_keyboard(lang)
@@ -246,7 +253,8 @@ async def show_4000_progress(callback: CallbackQuery):
     lines.insert(2, f"📚 {get_text('learned', lang)}: {learned_words}/{total_words}")
     lines.insert(3, f"⭐ {get_text('mastered', lang)}: {mastered_words}\n")
     
-    await callback.message.edit_text(
+    await safe_edit_text(
+        callback.message,
         "\n".join(lines),
         parse_mode="Markdown",
         reply_markup=get_back_button("menu:4000words", lang)

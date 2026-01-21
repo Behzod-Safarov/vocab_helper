@@ -14,6 +14,7 @@ from keyboards.inline import (
     get_translation_selection_keyboard,
     get_back_button,
 )
+from utils.helpers import safe_edit_text
 from locales import get_text
 import config
 
@@ -56,7 +57,8 @@ async def show_settings_menu(callback: CallbackQuery):
     settings = user_manager.data.get("settings", {})
     lang = settings.get("language", "en")
     
-    await callback.message.edit_text(
+    await safe_edit_text(
+        callback.message,
         get_text("settings_title", lang),
         parse_mode="Markdown",
         reply_markup=get_settings_keyboard(settings, lang)
@@ -72,7 +74,8 @@ async def select_language(callback: CallbackQuery):
     user_id = callback.from_user.id
     lang = await get_user_lang(user_id)
     
-    await callback.message.edit_text(
+    await safe_edit_text(
+        callback.message,
         get_text("select_language", lang),
         parse_mode="Markdown",
         reply_markup=get_language_selection_keyboard(lang)
@@ -95,7 +98,8 @@ async def set_language(callback: CallbackQuery):
     await callback.answer(get_text("language_changed", new_lang))
     
     settings = user_manager.data.get("settings", {})
-    await callback.message.edit_text(
+    await safe_edit_text(
+        callback.message,
         get_text("settings_title", new_lang),
         parse_mode="Markdown",
         reply_markup=get_settings_keyboard(settings, new_lang)
@@ -114,7 +118,8 @@ async def select_translation(callback: CallbackQuery):
     lang = settings.get("language", "en")
     current_trans = settings.get("translation_language", "both")
     
-    await callback.message.edit_text(
+    await safe_edit_text(
+        callback.message,
         get_text("select_translation", lang),
         parse_mode="Markdown",
         reply_markup=get_translation_selection_keyboard(current_trans, lang)
@@ -138,7 +143,8 @@ async def set_translation(callback: CallbackQuery):
     await callback.answer(get_text("translation_changed", lang))
     
     settings = user_manager.data.get("settings", {})
-    await callback.message.edit_text(
+    await safe_edit_text(
+        callback.message,
         get_text("settings_title", lang),
         parse_mode="Markdown",
         reply_markup=get_settings_keyboard(settings, lang)
@@ -182,7 +188,8 @@ async def set_daily_words(callback: CallbackQuery):
     lang = settings.get("language", "en")
     current = settings.get("daily_new_words", 10)
     
-    await callback.message.edit_text(
+    await safe_edit_text(
+        callback.message,
         get_text("daily_words_title", lang),
         parse_mode="Markdown",
         reply_markup=get_number_selection_keyboard(
@@ -210,7 +217,8 @@ async def save_daily_words(callback: CallbackQuery):
     lang = user_manager.data["settings"].get("language", "en")
     await callback.answer(f"Daily words set to {value}")
     
-    await callback.message.edit_text(
+    await safe_edit_text(
+        callback.message,
         get_text("settings_title", lang),
         parse_mode="Markdown",
         reply_markup=get_settings_keyboard(user_manager.data["settings"], lang)
@@ -229,7 +237,8 @@ async def set_review_words(callback: CallbackQuery):
     lang = settings.get("language", "en")
     current = settings.get("daily_review_words", 20)
     
-    await callback.message.edit_text(
+    await safe_edit_text(
+        callback.message,
         get_text("daily_review_title", lang),
         parse_mode="Markdown",
         reply_markup=get_number_selection_keyboard(
@@ -257,7 +266,8 @@ async def save_review_words(callback: CallbackQuery):
     lang = user_manager.data["settings"].get("language", "en")
     await callback.answer(f"Daily review set to {value}")
     
-    await callback.message.edit_text(
+    await safe_edit_text(
+        callback.message,
         get_text("settings_title", lang),
         parse_mode="Markdown",
         reply_markup=get_settings_keyboard(user_manager.data["settings"], lang)
@@ -270,7 +280,8 @@ async def set_reminder_time(callback: CallbackQuery):
     user_id = callback.from_user.id
     lang = await get_user_lang(user_id)
     
-    await callback.message.edit_text(
+    await safe_edit_text(
+        callback.message,
         get_text("reminder_time_title", lang),
         parse_mode="Markdown",
         reply_markup=get_number_selection_keyboard(
@@ -299,7 +310,8 @@ async def save_reminder_time(callback: CallbackQuery):
     lang = user_manager.data["settings"].get("language", "en")
     await callback.answer(f"Reminder time set to {value}")
     
-    await callback.message.edit_text(
+    await safe_edit_text(
+        callback.message,
         get_text("settings_title", lang),
         parse_mode="Markdown",
         reply_markup=get_settings_keyboard(user_manager.data["settings"], lang)

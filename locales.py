@@ -211,6 +211,21 @@ Keling, lug'atingizni birga boyitamiz! 💪
         "uz": "🔊 Talaffuz",
         "ru": "🔊 Произношение",
     },
+    "pronunciation_not_available": {
+        "en": "Pronunciation not available for this word",
+        "uz": "Bu so'z uchun talaffuz mavjud emas",
+        "ru": "Произношение недоступно для этого слова",
+    },
+    "pronunciation_error": {
+        "en": "Error playing pronunciation. Please try again.",
+        "uz": "Talaffuzni ijro etishda xatolik. Qaytadan urinib ko'ring.",
+        "ru": "Ошибка воспроизведения. Попробуйте снова.",
+    },
+    "tts_not_installed": {
+        "en": "Text-to-speech is not available. Please install gTTS.",
+        "uz": "Matnni nutqqa aylantirish mavjud emas. gTTS o'rnating.",
+        "ru": "Преобразование текста в речь недоступно. Установите gTTS.",
+    },
     "btn_example": {
         "en": "📝 Example",
         "uz": "📝 Misol",
@@ -288,6 +303,101 @@ Keling, lug'atingizni birga boyitamiz! 💪
         "uz": "➡️ Keyingi",
         "ru": "➡️ Далее",
     },
+    "btn_prev_page": {
+        "en": "◀️ Prev",
+        "uz": "◀️ Oldingi",
+        "ru": "◀️ Назад",
+    },
+    "btn_next_page": {
+        "en": "Next ▶️",
+        "uz": "Keyingi ▶️",
+        "ru": "Далее ▶️",
+    },
+    "btn_unit_test": {
+        "en": "📝 Unit Test",
+        "uz": "📝 Bo'lim testi",
+        "ru": "📝 Тест раздела",
+    },
+    "btn_level_test_menu": {
+        "en": "📚 Level Test",
+        "uz": "📚 Daraja testi",
+        "ru": "📚 Тест уровня",
+    },
+    "btn_review_test": {
+        "en": "🔄 Review Test",
+        "uz": "🔄 Takrorlash testi",
+        "ru": "🔄 Тест повторения",
+    },
+    "btn_custom_test": {
+        "en": "✏️ Custom Words Test",
+        "uz": "✏️ Shaxsiy so'zlar testi",
+        "ru": "✏️ Тест своих слов",
+    },
+    "btn_hint": {
+        "en": "💡 Hint",
+        "uz": "💡 Yordam",
+        "ru": "💡 Подсказка",
+    },
+    "btn_skip": {
+        "en": "⏭ Skip",
+        "uz": "⏭ O'tkazib yuborish",
+        "ru": "⏭ Пропустить",
+    },
+    "btn_end_test": {
+        "en": "🏁 End Test",
+        "uz": "🏁 Testni tugatish",
+        "ru": "🏁 Завершить тест",
+    },
+    "btn_retry_test": {
+        "en": "🔄 Retry Test",
+        "uz": "🔄 Qayta urinish",
+        "ru": "🔄 Повторить тест",
+    },
+    "btn_view_details": {
+        "en": "📊 View Details",
+        "uz": "📊 Batafsil ko'rish",
+        "ru": "📊 Подробности",
+    },
+    "btn_new_test": {
+        "en": "📝 New Test",
+        "uz": "📝 Yangi test",
+        "ru": "📝 Новый тест",
+    },
+    "btn_schedule": {
+        "en": "📅 Schedule",
+        "uz": "📅 Jadval",
+        "ru": "📅 Расписание",
+    },
+    "btn_overall_stats": {
+        "en": "📊 Overall Stats",
+        "uz": "📊 Umumiy statistika",
+        "ru": "📊 Общая статистика",
+    },
+    "btn_level_progress": {
+        "en": "📘 Level Progress",
+        "uz": "📘 Daraja bo'yicha",
+        "ru": "📘 Прогресс уровней",
+    },
+    "btn_streak_info": {
+        "en": "🔥 Streak Info",
+        "uz": "🔥 Streak ma'lumoti",
+        "ru": "🔥 Серия дней",
+    },
+    "btn_weak_words_stats": {
+        "en": "⚠️ Weak Words",
+        "uz": "⚠️ Qiyin so'zlar",
+        "ru": "⚠️ Сложные слова",
+    },
+    "btn_confirm": {
+        "en": "✅ Confirm",
+        "uz": "✅ Tasdiqlash",
+        "ru": "✅ Подтвердить",
+    },
+    "btn_cancel": {
+        "en": "❌ Cancel",
+        "uz": "❌ Bekor qilish",
+        "ru": "❌ Отмена",
+    },
     
     # ============ Review Section ============
     "review_menu_title": {
@@ -309,6 +419,16 @@ Keling, lug'atingizni birga boyitamiz! 💪
         "en": "📚 Review All Words",
         "uz": "📚 Barcha so'zlarni takrorlash",
         "ru": "📚 Повторить все слова",
+    },
+    "btn_start_review": {
+        "en": "🔄 Start Review",
+        "uz": "🔄 Takrorlashni boshlash",
+        "ru": "🔄 Начать повторение",
+    },
+    "btn_start_review_due": {
+        "en": "🔄 Start Review ({count} due)",
+        "uz": "🔄 Takrorlashni boshlash ({count} ta)",
+        "ru": "🔄 Начать повторение ({count} слов)",
     },
     "no_words_to_review": {
         "en": "🎉 *Great job!*\n\nNo words to review right now. Come back later or learn new words!",
@@ -766,6 +886,16 @@ Ko'proq yordam kerakmi? Shunchaki o'rganishni boshlang! 📚
         "uz": "🔄 *Takrorlash testi*",
         "ru": "🔄 *Тест на повторение*",
     },
+    "custom_test_title": {
+        "en": "✏️ *Custom Words Test*",
+        "uz": "✏️ *Shaxsiy so'zlar testi*",
+        "ru": "✏️ *Тест своих слов*",
+    },
+    "custom_test_no_words": {
+        "en": "📝 *Not Enough Custom Words*\n\nYou need at least 4 custom words to start a test.\nGo to Learn → Add New Word to add your own words!",
+        "uz": "📝 *Yetarli so'zlar yo'q*\n\nTest boshlash uchun kamida 4 ta shaxsiy so'z kerak.\nO'rganish → Yangi so'z qo'shish bo'limiga o'ting!",
+        "ru": "📝 *Недостаточно слов*\n\nДля теста нужно минимум 4 слова.\nПерейдите в Учить → Добавить слово!",
+    },
     "correct": {
         "en": "✅ Correct!",
         "uz": "✅ To'g'ri!",
@@ -832,6 +962,31 @@ Ko'proq yordam kerakmi? Shunchaki o'rganishni boshlang! 📚
         "en": "📊 *Test Results*",
         "uz": "📊 *Test natijalari*",
         "ru": "📊 *Результаты теста*",
+    },
+    "test_details_title": {
+        "en": "Test Details",
+        "uz": "Test tafsilotlari",
+        "ru": "Детали теста",
+    },
+    "no_test_details": {
+        "en": "No test details available",
+        "uz": "Test tafsilotlari mavjud emas",
+        "ru": "Детали теста недоступны",
+    },
+    "correct_words": {
+        "en": "Correct Words",
+        "uz": "To'g'ri so'zlar",
+        "ru": "Правильные слова",
+    },
+    "words_to_review": {
+        "en": "Words to Review",
+        "uz": "Takrorlash kerak so'zlar",
+        "ru": "Слова для повторения",
+    },
+    "more": {
+        "en": "more",
+        "uz": "yana",
+        "ru": "ещё",
     },
     "correct_count": {
         "en": "Correct",
@@ -944,6 +1099,11 @@ Ko'proq yordam kerakmi? Shunchaki o'rganishni boshlang! 📚
         "en": "Streak",
         "uz": "Seriya",
         "ru": "Серия",
+    },
+    "best_streak": {
+        "en": "Best Streak",
+        "uz": "Eng yaxshi seriya",
+        "ru": "Лучшая серия",
     },
     "current": {
         "en": "Current",

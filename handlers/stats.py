@@ -18,6 +18,7 @@ from keyboards.inline import (
     get_level_stats_keyboard,
     get_back_button,
 )
+from utils.helpers import safe_edit_text
 from locales import get_text
 import config
 
@@ -85,7 +86,8 @@ async def show_overall_stats(callback: CallbackQuery):
     tracker = ProgressTracker(user_manager.data)
     stats = tracker.get_overall_stats()
     
-    await callback.message.edit_text(
+    await safe_edit_text(
+        callback.message,
         format_stats_message(stats, lang),
         parse_mode="Markdown",
         reply_markup=get_stats_menu_keyboard(lang)

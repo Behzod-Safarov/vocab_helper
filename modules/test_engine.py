@@ -71,6 +71,8 @@ class TestSession:
         self.results: Dict[str, bool] = {}
         self.started_at = datetime.now()
         self.completed = False
+        self.current_streak = 0
+        self.best_streak = 0
     
     def add_questions(self, questions: List[Question]):
         """Add questions to the session"""
@@ -97,6 +99,14 @@ class TestSession:
         self.answers[question.question_id] = answer
         self.results[question.word_id] = is_correct
         
+        # Update streak
+        if is_correct:
+            self.current_streak += 1
+            if self.current_streak > self.best_streak:
+                self.best_streak = self.current_streak
+        else:
+            self.current_streak = 0
+        
         return is_correct, question.correct_answer
     
     def next_question(self) -> Optional[Question]:
@@ -110,6 +120,20 @@ class TestSession:
     def get_progress(self) -> Tuple[int, int]:
         """Get current progress (answered, total)"""
         return self.current_index, len(self.questions)
+    
+    def get_quiz_stats(self) -> Dict:
+        """Get current quiz statistics"""
+        correct = sum(1 for v in self.results.values() if v)
+        answered = len(self.results)
+        return {
+            "correct": correct,
+            "wrong": answered - correct,
+            "answered": answered,
+            "total": len(self.questions),
+            "current_streak": self.current_streak,
+            "best_streak": self.best_streak,
+            "percentage": (correct / answered * 100) if answered > 0 else 0,
+        }
     
     def get_results(self) -> TestResult:
         """Calculate and return test results"""
@@ -141,6 +165,8 @@ class TestSession:
             "results": self.results,
             "started_at": self.started_at.isoformat(),
             "completed": self.completed,
+            "current_streak": self.current_streak,
+            "best_streak": self.best_streak,
             "questions": [
                 {
                     "question_id": q.question_id,
@@ -174,6 +200,8 @@ class TestSession:
         session.results = data["results"]
         session.started_at = datetime.fromisoformat(data["started_at"])
         session.completed = data["completed"]
+        session.current_streak = data.get("current_streak", 0)
+        session.best_streak = data.get("best_streak", 0)
         
         session.questions = [
             Question(
@@ -350,6 +378,48 @@ class QuestionGenerator:
         return questions
 
 
+def create_progress_bar(current: int, total: int, length: int = 10) -> str:
+    """Create a visual progress bar"""
+    filled = int((current / total) * length) if total > 0 else 0
+    empty = length - filled
+    return "🟩" * filled + "⬜" * empty
+
+
+def format_question_quiz(
+    question: Question, 
+    progress: Tuple[int, int],
+    quiz_stats: Dict = None,
+    lang: str = "en"
+) -> str:
+    """Format a question for quiz mode display with enhanced visuals"""
+    from locales import get_text
+    
+    lines = []
+    current, total = progress
+    
+    # Progress bar header
+    progress_bar = create_progress_bar(current, total)
+    lines.append(f"📊 {progress_bar} {current + 1}/{total}")
+    
+    # Stats line (if available)
+    if quiz_stats:
+        correct = quiz_stats.get("correct", 0)
+        streak = quiz_stats.get("current_streak", 0)
+        stats_line = f"✅ {correct}"
+        if streak >= 2:
+            stats_line += f"  🔥 {streak}"
+        lines.append(stats_line)
+    
+    lines.append("")  # Empty line
+    lines.append("─" * 20)
+    lines.append("")
+    
+    # Question text
+    lines.append(question.question_text)
+    
+    return "\n".join(lines)
+
+
 def format_question(question: Question, show_progress: Tuple[int, int] = None, lang: str = "en") -> str:
     """Format a question for display in Telegram"""
     from locales import get_text
@@ -371,30 +441,46 @@ def format_question(question: Question, show_progress: Tuple[int, int] = None, l
     return "\n".join(lines)
 
 
-def format_result(result: TestResult, lang: str = "en") -> str:
+def format_result(result: TestResult, lang: str = "en", best_streak: int = 0) -> str:
     """Format test results for display"""
     from locales import get_text
     
+    # Create a visual score bar
+    score_filled = int(result.score_percentage / 10)
+    score_bar = "🟩" * score_filled + "⬜" * (10 - score_filled)
+    
     lines = [
-        get_text("test_results_title", lang) + "\n",
-        f"✅ {get_text('correct_count', lang)}: {result.correct_answers}",
-        f"❌ {get_text('wrong_count', lang)}: {result.wrong_answers}",
-        f"📈 {get_text('score', lang)}: {result.score_percentage:.1f}%",
-        f"⏱ {get_text('time', lang)}: {result.time_taken // 60}{get_text('min', lang)} {result.time_taken % 60}{get_text('sec', lang)}",
+        "🏆 " + get_text("test_results_title", lang),
+        "",
+        f"{score_bar}",
+        f"📊 {result.score_percentage:.0f}%",
+        "",
     ]
     
     if result.level and result.unit:
-        lines.insert(1, f"📚 {get_text('level', lang)} {result.level} • {get_text('unit', lang)} {result.unit}\n")
+        lines.append(f"📚 {get_text('level', lang)} {result.level} • {get_text('unit', lang)} {result.unit}")
+        lines.append("")
+    
+    lines.extend([
+        f"✅ {get_text('correct_count', lang)}: {result.correct_answers}",
+        f"❌ {get_text('wrong_count', lang)}: {result.wrong_answers}",
+        f"⏱ {get_text('time', lang)}: {result.time_taken // 60}{get_text('min', lang)} {result.time_taken % 60}{get_text('sec', lang)}",
+    ])
+    
+    if best_streak >= 2:
+        lines.append(f"🔥 {get_text('best_streak', lang)}: {best_streak}")
+    
+    lines.append("")
     
     # Add emoji based on score
     if result.score_percentage >= 90:
-        lines.append("\n" + get_text("result_excellent", lang))
+        lines.append("🌟 " + get_text("result_excellent", lang))
     elif result.score_percentage >= 70:
-        lines.append("\n" + get_text("result_great", lang))
+        lines.append("👏 " + get_text("result_great", lang))
     elif result.score_percentage >= 50:
-        lines.append("\n" + get_text("result_good", lang))
+        lines.append("💪 " + get_text("result_good", lang))
     else:
-        lines.append("\n" + get_text("result_keep_trying", lang))
+        lines.append("📚 " + get_text("result_keep_trying", lang))
     
     return "\n".join(lines)
 

@@ -10,7 +10,7 @@ from aiogram.fsm.context import FSMContext
 from storage.json_storage import UserDataManager
 from modules.spaced_repetition import SpacedRepetitionScheduler
 from keyboards.inline import get_review_menu_keyboard, get_back_button
-from utils.helpers import get_random_motivation
+from utils.helpers import get_random_motivation, safe_edit_text
 from locales import get_text
 
 router = Router()
@@ -71,7 +71,8 @@ async def show_review_menu(callback: CallbackQuery):
     else:
         text = get_text("review_words_due_short", lang, count=due_count)
     
-    await callback.message.edit_text(
+    await safe_edit_text(
+        callback.message,
         text,
         parse_mode="Markdown",
         reply_markup=get_review_menu_keyboard(due_count, lang)
@@ -104,7 +105,8 @@ async def show_weak_words(callback: CallbackQuery):
             weak_words.append(word_id)
     
     if not weak_words:
-        await callback.message.edit_text(
+        await safe_edit_text(
+            callback.message,
             get_text("no_weak_words_review", lang),
             parse_mode="Markdown",
             reply_markup=get_back_button("menu:review", lang)
@@ -119,7 +121,8 @@ async def show_weak_words(callback: CallbackQuery):
             if parsed:
                 word_info.append(f"• L{parsed['level']} U{parsed['unit']} W{parsed['word_index']}")
         
-        await callback.message.edit_text(
+        await safe_edit_text(
+            callback.message,
             get_text("weak_words_list", lang, count=len(weak_words), word_list=chr(10).join(word_info), more="..." if len(weak_words) > 10 else ""),
             parse_mode="Markdown",
             reply_markup=get_back_button("menu:review", lang)
@@ -154,7 +157,8 @@ async def show_review_schedule(callback: CallbackQuery):
         else:
             schedule_lines.append(f"{day_name}: - (0)")
     
-    await callback.message.edit_text(
+    await safe_edit_text(
+        callback.message,
         get_text("review_schedule_title", lang) + f"\n\n```\n{chr(10).join(schedule_lines)}\n```\n\n" + get_text("review_schedule_tip", lang),
         parse_mode="Markdown",
         reply_markup=get_back_button("menu:review", lang)

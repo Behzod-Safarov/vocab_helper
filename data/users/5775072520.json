@@ -2,20 +2,21 @@
   "user_id": 5775072520,
   "username": "BEHZOD_SAFAROV",
   "created_at": "2026-01-20T19:09:30.321112",
-  "last_active": "2026-01-21T13:48:51.082639",
+  "last_active": "2026-01-21T21:12:26.380859",
   "settings": {
     "daily_new_words": 10,
-    "daily_review_words": 20,
+    "daily_review_words": 10,
     "notifications_enabled": true,
     "notification_time": "09:00",
-    "language": "uz"
+    "language": "en",
+    "translation_language": "both"
   },
   "stats": {
     "total_words_learned": 0,
-    "total_reviews": 23,
-    "total_tests_taken": 2,
-    "correct_answers": 4,
-    "wrong_answers": 19,
+    "total_reviews": 72,
+    "total_tests_taken": 12,
+    "correct_answers": 22,
+    "wrong_answers": 50,
     "current_streak": 2,
     "longest_streak": 2,
     "last_study_date": "2026-01-21"
@@ -44,67 +45,67 @@
     "completed_units": [],
     "word_status": {
       "L1U1W4": {
-        "status": "learning",
-        "reviews": 1,
-        "correct_count": 1,
+        "status": "known",
+        "reviews": 2,
+        "correct_count": 2,
         "ease_factor": 2.5,
-        "interval": 1,
-        "last_review": "2026-01-20T19:11:08.408532",
-        "next_review": "2026-01-21T19:11:08.408543"
+        "interval": 6,
+        "last_review": "2026-01-21T19:32:44.109872",
+        "next_review": "2026-01-27T19:32:44.109924"
       },
       "L1U1W16": {
-        "status": "learning",
-        "reviews": 1,
-        "correct_count": 1,
-        "ease_factor": 2.5,
+        "status": "weak",
+        "reviews": 2,
+        "correct_count": 0,
+        "ease_factor": 2.3,
         "interval": 1,
-        "last_review": "2026-01-20T19:11:30.410573",
-        "next_review": "2026-01-21T19:11:30.410585"
+        "last_review": "2026-01-21T19:33:30.561343",
+        "next_review": "2026-01-22T19:33:30.561360"
       },
       "L1U1W19": {
         "status": "learning",
-        "reviews": 1,
-        "correct_count": 0,
-        "ease_factor": 2.3,
-        "interval": 1,
-        "last_review": "2026-01-20T19:11:59.599463",
-        "next_review": "2026-01-21T19:11:59.599474"
+        "reviews": 2,
+        "correct_count": 1,
+        "ease_factor": 2.4,
+        "interval": 6,
+        "last_review": "2026-01-21T19:33:38.905448",
+        "next_review": "2026-01-27T19:33:38.905462"
       },
       "L4U9W10": {
-        "status": "learning",
-        "reviews": 1,
-        "correct_count": 1,
+        "status": "known",
+        "reviews": 2,
+        "correct_count": 2,
         "ease_factor": 2.5,
-        "interval": 1,
-        "last_review": "2026-01-20T19:13:07.397936",
-        "next_review": "2026-01-21T19:13:07.397942"
+        "interval": 6,
+        "last_review": "2026-01-21T19:37:20.882821",
+        "next_review": "2026-01-27T19:37:20.882845"
       },
       "L4U25W3": {
         "status": "learning",
-        "reviews": 1,
-        "correct_count": 0,
-        "ease_factor": 2.3,
-        "interval": 1,
-        "last_review": "2026-01-20T19:13:17.352626",
-        "next_review": "2026-01-21T19:13:17.352635"
+        "reviews": 2,
+        "correct_count": 1,
+        "ease_factor": 2.4,
+        "interval": 6,
+        "last_review": "2026-01-21T19:37:35.865542",
+        "next_review": "2026-01-27T19:37:35.865565"
       },
       "L4U14W10": {
         "status": "learning",
-        "reviews": 1,
-        "correct_count": 0,
-        "ease_factor": 2.3,
-        "interval": 1,
-        "last_review": "2026-01-20T19:13:21.182172",
-        "next_review": "2026-01-21T19:13:21.182179"
+        "reviews": 2,
+        "correct_count": 1,
+        "ease_factor": 2.4,
+        "interval": 6,
+        "last_review": "2026-01-21T19:37:46.877018",
+        "next_review": "2026-01-27T19:37:46.877031"
       },
       "L4U17W13": {
         "status": "learning",
-        "reviews": 1,
-        "correct_count": 0,
-        "ease_factor": 2.3,
-        "interval": 1,
-        "last_review": "2026-01-20T19:13:24.064720",
-        "next_review": "2026-01-21T19:13:24.064726"
+        "reviews": 2,
+        "correct_count": 1,
+        "ease_factor": 2.4,
+        "interval": 6,
+        "last_review": "2026-01-21T19:37:54.609544",
+        "next_review": "2026-01-27T19:37:54.609557"
       },
       "L1U8W0": {
         "status": "learning",
@@ -231,6 +232,267 @@
         "interval": 1,
         "last_review": "2026-01-21T13:48:51.080365",
         "next_review": "2026-01-22T13:48:51.080373"
+      },
+      "L1U1W6": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 0,
+        "ease_factor": 2.3,
+        "interval": 1,
+        "last_review": "2026-01-21T20:14:48.111012",
+        "next_review": "2026-01-22T20:14:48.111019"
+      },
+      "L6U20W1": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 0,
+        "ease_factor": 2.3,
+        "interval": 1,
+        "last_review": "2026-01-21T20:26:32.887629",
+        "next_review": "2026-01-22T20:26:32.887662"
+      },
+      "L1U2W3": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 0,
+        "ease_factor": 2.3,
+        "interval": 1,
+        "last_review": "2026-01-21T20:47:56.443302",
+        "next_review": "2026-01-22T20:47:56.443309"
+      },
+      "L1U2W19": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 1,
+        "ease_factor": 2.5,
+        "interval": 1,
+        "last_review": "2026-01-21T20:48:03.115783",
+        "next_review": "2026-01-22T20:48:03.115793"
+      },
+      "L1U2W2": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 0,
+        "ease_factor": 2.3,
+        "interval": 1,
+        "last_review": "2026-01-21T20:48:08.137263",
+        "next_review": "2026-01-22T20:48:08.137276"
+      },
+      "L1U2W10": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 1,
+        "ease_factor": 2.5,
+        "interval": 1,
+        "last_review": "2026-01-21T20:48:13.244862",
+        "next_review": "2026-01-22T20:48:13.244874"
+      },
+      "L1U2W12": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 0,
+        "ease_factor": 2.3,
+        "interval": 1,
+        "last_review": "2026-01-21T20:48:20.822130",
+        "next_review": "2026-01-22T20:48:20.822138"
+      },
+      "L1U2W0": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 0,
+        "ease_factor": 2.3,
+        "interval": 1,
+        "last_review": "2026-01-21T20:48:25.904592",
+        "next_review": "2026-01-22T20:48:25.904599"
+      },
+      "L1U2W16": {
+        "status": "weak",
+        "reviews": 2,
+        "correct_count": 0,
+        "ease_factor": 2.0999999999999996,
+        "interval": 1,
+        "last_review": "2026-01-21T21:11:55.918312",
+        "next_review": "2026-01-22T21:11:55.918350"
+      },
+      "L1U2W11": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 0,
+        "ease_factor": 2.3,
+        "interval": 1,
+        "last_review": "2026-01-21T20:48:48.944464",
+        "next_review": "2026-01-22T20:48:48.944474"
+      },
+      "L1U2W17": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 1,
+        "ease_factor": 2.5,
+        "interval": 1,
+        "last_review": "2026-01-21T20:48:52.675503",
+        "next_review": "2026-01-22T20:48:52.675512"
+      },
+      "L1U2W1": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 0,
+        "ease_factor": 2.3,
+        "interval": 1,
+        "last_review": "2026-01-21T20:48:56.772117",
+        "next_review": "2026-01-22T20:48:56.772123"
+      },
+      "L2U3W1": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 0,
+        "ease_factor": 2.3,
+        "interval": 1,
+        "last_review": "2026-01-21T20:52:35.963210",
+        "next_review": "2026-01-22T20:52:35.963219"
+      },
+      "L2U3W0": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 1,
+        "ease_factor": 2.5,
+        "interval": 1,
+        "last_review": "2026-01-21T20:52:39.474395",
+        "next_review": "2026-01-22T20:52:39.474406"
+      },
+      "L2U3W14": {
+        "status": "weak",
+        "reviews": 2,
+        "correct_count": 0,
+        "ease_factor": 2.0999999999999996,
+        "interval": 1,
+        "last_review": "2026-01-21T20:57:47.263435",
+        "next_review": "2026-01-22T20:57:47.263475"
+      },
+      "L2U3W18": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 1,
+        "ease_factor": 2.5,
+        "interval": 1,
+        "last_review": "2026-01-21T20:52:46.105829",
+        "next_review": "2026-01-22T20:52:46.105842"
+      },
+      "L2U3W17": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 0,
+        "ease_factor": 2.3,
+        "interval": 1,
+        "last_review": "2026-01-21T20:52:49.946026",
+        "next_review": "2026-01-22T20:52:49.946032"
+      },
+      "L2U3W7": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 1,
+        "ease_factor": 2.5,
+        "interval": 1,
+        "last_review": "2026-01-21T20:52:53.649682",
+        "next_review": "2026-01-22T20:52:53.649702"
+      },
+      "L2U3W5": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 0,
+        "ease_factor": 2.3,
+        "interval": 1,
+        "last_review": "2026-01-21T20:52:58.176880",
+        "next_review": "2026-01-22T20:52:58.176886"
+      },
+      "L2U3W19": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 1,
+        "ease_factor": 2.5,
+        "interval": 1,
+        "last_review": "2026-01-21T20:53:02.339103",
+        "next_review": "2026-01-22T20:53:02.339109"
+      },
+      "L2U3W2": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 0,
+        "ease_factor": 2.3,
+        "interval": 1,
+        "last_review": "2026-01-21T20:53:05.908402",
+        "next_review": "2026-01-22T20:53:05.908414"
+      },
+      "L2U3W15": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 1,
+        "ease_factor": 2.5,
+        "interval": 1,
+        "last_review": "2026-01-21T20:53:09.244433",
+        "next_review": "2026-01-22T20:53:09.244440"
+      },
+      "L6U14W10": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 1,
+        "ease_factor": 2.5,
+        "interval": 1,
+        "last_review": "2026-01-21T20:55:15.641296",
+        "next_review": "2026-01-22T20:55:15.641332"
+      },
+      "L1U1W0": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 1,
+        "ease_factor": 2.5,
+        "interval": 1,
+        "last_review": "2026-01-21T20:58:52.253074",
+        "next_review": "2026-01-22T20:58:52.253100"
+      },
+      "L1U1W1": {
+        "status": "weak",
+        "reviews": 2,
+        "correct_count": 0,
+        "ease_factor": 2.3,
+        "interval": 1,
+        "last_review": "2026-01-21T21:04:09.004845",
+        "next_review": "2026-01-22T21:04:09.004887"
+      },
+      "L1U2W4": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 0,
+        "ease_factor": 2.3,
+        "interval": 1,
+        "last_review": "2026-01-21T21:11:49.330504",
+        "next_review": "2026-01-22T21:11:49.330529"
+      },
+      "L1U2W5": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 0,
+        "ease_factor": 2.3,
+        "interval": 1,
+        "last_review": "2026-01-21T21:12:01.109756",
+        "next_review": "2026-01-22T21:12:01.109776"
+      },
+      "L1U2W8": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 1,
+        "ease_factor": 2.5,
+        "interval": 1,
+        "last_review": "2026-01-21T21:12:10.697171",
+        "next_review": "2026-01-22T21:12:10.697200"
+      },
+      "L1U2W9": {
+        "status": "learning",
+        "reviews": 1,
+        "correct_count": 0,
+        "ease_factor": 2.3,
+        "interval": 1,
+        "last_review": "2026-01-21T21:12:19.827170",
+        "next_review": "2026-01-22T21:12:19.827191"
       }
     }
   },

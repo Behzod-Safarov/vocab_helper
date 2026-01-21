@@ -246,9 +246,22 @@ async def show_next_learning_word(callback: CallbackQuery, state: FSMContext):
     
     data = await state.get_data()
     
-    if not data:
+    # Delete previous audio message if exists
+    prev_audio_id = data.get("last_audio_message_id") if data else None
+    if prev_audio_id:
+        try:
+            await callback.bot.delete_message(
+                chat_id=callback.message.chat.id,
+                message_id=prev_audio_id
+            )
+        except Exception:
+            pass  # Ignore if message already deleted
+        await state.update_data(last_audio_message_id=None)
+    
+    # Check if we have valid learning session data
+    if not data or "level" not in data or "unit" not in data:
         await callback.message.edit_text(
-            get_text("error_generic", lang),
+            get_text("session_expired", lang),
             reply_markup=get_back_button("learn:4000", lang)
         )
         await callback.answer()
@@ -256,8 +269,8 @@ async def show_next_learning_word(callback: CallbackQuery, state: FSMContext):
     
     level = data["level"]
     unit = data["unit"]
-    current_idx = data["current_idx"] + 1
-    total_words = data["total_words"]
+    current_idx = data.get("current_idx", 0) + 1
+    total_words = data.get("total_words", 0)
     
     if current_idx >= total_words:
         # Unit completed
@@ -310,6 +323,95 @@ async def show_example(callback: CallbackQuery):
             return
     
     await callback.answer(get_text("example_not_available", lang), show_alert=True)
+
+
+@router.callback_query(F.data.startswith("learn:audio:"))
+async def play_pronunciation(callback: CallbackQuery, state: FSMContext):
+    """Play word pronunciation using TTS"""
+    from aiogram.types import FSInputFile
+    import tempfile
+    import os
+    
+    user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
+    
+    word_id = callback.data.split(":")[-1]
+    
+    # Parse word ID to get the word
+    from utils.helpers import parse_word_id
+    parsed = parse_word_id(word_id)
+    
+    word_text = None
+    
+    if parsed:
+        words = await get_unit_words(parsed["level"], parsed["unit"])
+        if words and parsed["word_index"] < len(words):
+            word_text = words[parsed["word_index"]].get("word", "")
+    else:
+        # Custom word - try to get from user's custom vocabulary
+        user_manager = UserDataManager(user_id)
+        await user_manager.load()
+        custom_words = user_manager.data.get("custom_vocabulary", [])
+        for cw in custom_words:
+            if cw.get("id") == word_id:
+                word_text = cw.get("word", "")
+                break
+    
+    if not word_text:
+        await callback.answer(get_text("pronunciation_not_available", lang), show_alert=True)
+        return
+    
+    try:
+        from gtts import gTTS
+        
+        # Create TTS audio
+        tts = gTTS(text=word_text, lang='en', slow=False)
+        
+        # Save to temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as tmp_file:
+            tmp_path = tmp_file.name
+            tts.save(tmp_path)
+        
+        # Send voice message
+        audio_file = FSInputFile(tmp_path, filename=f"{word_text}.mp3")
+        voice_msg = await callback.message.answer_voice(
+            audio_file,
+            caption=f"🔊 *{word_text}*",
+            parse_mode="Markdown"
+        )
+        
+        # Store audio message ID for later deletion
+        data = await state.get_data()
+        prev_audio_id = data.get("last_audio_message_id")
+        
+        # Delete previous audio if exists
+        if prev_audio_id:
+            try:
+                await callback.bot.delete_message(
+                    chat_id=callback.message.chat.id,
+                    message_id=prev_audio_id
+                )
+            except Exception:
+                pass  # Ignore if message already deleted
+        
+        # Save new audio message ID
+        await state.update_data(last_audio_message_id=voice_msg.message_id)
+        
+        # Clean up temp file
+        os.unlink(tmp_path)
+        
+        await callback.answer()
+        
+    except ImportError:
+        await callback.answer(
+            get_text("tts_not_installed", lang),
+            show_alert=True
+        )
+    except Exception as e:
+        await callback.answer(
+            get_text("pronunciation_error", lang),
+            show_alert=True
+        )
 
 
 # ============ Custom Words ============
@@ -505,6 +607,26 @@ async def start_review(callback: CallbackQuery, state: FSMContext):
                 )
                 await callback.answer()
                 return
+    else:
+        # Handle custom words
+        word_data = first_word.get("word_data")
+        if word_data:
+            # Format custom word for display
+            custom_word = {
+                "word": word_data.get("word", ""),
+                "meaning": word_data.get("meaning", ""),
+                "example": word_data.get("example", ""),
+                "definition": word_data.get("meaning", ""),
+            }
+            
+            await callback.message.edit_text(
+                get_text("review_progress", lang, current=1, total=len(due_words)) + "\n\n" +
+                format_word_card(custom_word, lang),
+                parse_mode="Markdown",
+                reply_markup=get_flashcard_keyboard(word_id, lang)
+            )
+            await callback.answer()
+            return
     
     await callback.answer(get_text("error_loading_word", lang))
 
@@ -520,16 +642,17 @@ async def show_flashcard_answer(callback: CallbackQuery, state: FSMContext):
     from utils.helpers import parse_word_id
     parsed = parse_word_id(word_id)
     
+    data = await state.get_data()
+    due_words = data.get("due_words", [])
+    current_idx = data.get("current_review_idx", 0)
+    
     if parsed:
+        # 4000 word
         words = await get_unit_words(parsed["level"], parsed["unit"])
         if words and parsed["word_index"] < len(words):
             word = words[parsed["word_index"]]
             word["level"] = parsed["level"]
             word["unit"] = parsed["unit"]
-            
-            data = await state.get_data()
-            due_words = data.get("due_words", [])
-            current_idx = data.get("current_review_idx", 0)
             
             await callback.message.edit_text(
                 get_text("review_progress", lang, current=current_idx + 1, total=len(due_words)) + "\n\n" +
@@ -539,6 +662,27 @@ async def show_flashcard_answer(callback: CallbackQuery, state: FSMContext):
             )
             await callback.answer()
             return
+    elif word_id.startswith("custom_"):
+        # Custom word
+        user_manager = UserDataManager(user_id)
+        await user_manager.load()
+        custom_words = user_manager.data.get("custom_vocabulary", [])
+        for cw in custom_words:
+            if cw.get("id") == word_id:
+                word = {
+                    "word": cw.get("word", ""),
+                    "definition": cw.get("meaning", ""),
+                    "example": cw.get("example", ""),
+                    "meaning": cw.get("meaning", ""),
+                }
+                await callback.message.edit_text(
+                    get_text("review_progress", lang, current=current_idx + 1, total=len(due_words)) + "\n\n" +
+                    format_word_for_display(word, show_answer=True, lang=lang, translation_lang=trans_lang),
+                    parse_mode="Markdown",
+                    reply_markup=get_flashcard_response_keyboard(word_id, lang)
+                )
+                await callback.answer()
+                return
     
     await callback.answer(get_text("error_showing_answer", lang))
 
@@ -550,11 +694,12 @@ async def flashcard_correct(callback: CallbackQuery, state: FSMContext):
     lang, trans_lang = await get_user_settings(user_id)
     
     word_id = callback.data.split(":")[-1]
+    is_4000 = not word_id.startswith("custom_")
     
     # Update word status
     user_manager = UserDataManager(user_id)
     await user_manager.load()
-    await user_manager.update_word_status(word_id, is_4000=True, correct=True)
+    await user_manager.update_word_status(word_id, is_4000=is_4000, correct=True)
     await user_manager.update_stats(correct=True)
     
     await callback.answer(get_text("great_job", lang))
@@ -570,11 +715,12 @@ async def flashcard_wrong(callback: CallbackQuery, state: FSMContext):
     lang, trans_lang = await get_user_settings(user_id)
     
     word_id = callback.data.split(":")[-1]
+    is_4000 = not word_id.startswith("custom_")
     
     # Update word status
     user_manager = UserDataManager(user_id)
     await user_manager.load()
-    await user_manager.update_word_status(word_id, is_4000=True, correct=False)
+    await user_manager.update_word_status(word_id, is_4000=is_4000, correct=False)
     await user_manager.update_stats(correct=False)
     
     await callback.answer(get_random_encouragement(lang))
@@ -617,6 +763,7 @@ async def show_next_review_word(callback: CallbackQuery, state: FSMContext, lang
     parsed = parse_word_id(word_id)
     
     if parsed:
+        # 4000 word
         words = await get_unit_words(parsed["level"], parsed["unit"])
         if words and parsed["word_index"] < len(words):
             word = words[parsed["word_index"]]
@@ -630,6 +777,27 @@ async def show_next_review_word(callback: CallbackQuery, state: FSMContext, lang
                 reply_markup=get_flashcard_keyboard(word_id, lang)
             )
             return
+    elif word_id.startswith("custom_"):
+        # Custom word
+        user_id = callback.from_user.id
+        user_manager = UserDataManager(user_id)
+        await user_manager.load()
+        custom_words = user_manager.data.get("custom_vocabulary", [])
+        for cw in custom_words:
+            if cw.get("id") == word_id:
+                word = {
+                    "word": cw.get("word", ""),
+                    "definition": cw.get("meaning", ""),
+                    "example": cw.get("example", ""),
+                    "meaning": cw.get("meaning", ""),
+                }
+                await callback.message.edit_text(
+                    get_text("review_progress", lang, current=current_idx + 1, total=len(due_words)) + "\n\n" +
+                    format_word_card(word, lang),
+                    parse_mode="Markdown",
+                    reply_markup=get_flashcard_keyboard(word_id, lang)
+                )
+                return
     
     # Error case - skip to next
     await show_next_review_word(callback, state, lang, trans_lang)
