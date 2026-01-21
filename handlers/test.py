@@ -27,6 +27,7 @@ from utils.helpers import (
     get_random_motivation, get_random_encouragement,
     create_word_id, parse_word_id
 )
+from locales import get_text
 import config
 
 router = Router()
@@ -38,24 +39,40 @@ class TestStates(StatesGroup):
     awaiting_fill_blank = State()
 
 
+async def get_user_settings(user_id: int):
+    """Get user language and translation settings"""
+    user_manager = UserDataManager(user_id)
+    await user_manager.load()
+    settings = user_manager.data.get("settings", {})
+    lang = settings.get("language", "en")
+    trans_lang = settings.get("translation_language", "both")
+    return lang, trans_lang
+
+
 @router.message(Command("test"))
 async def cmd_test(message: Message):
     """Handle /test command"""
+    user_id = message.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
+    
     await message.answer(
-        "📝 *Test Mode*\n\nChoose a test type:",
+        get_text("test_menu_title", lang),
         parse_mode="Markdown",
-        reply_markup=get_test_menu_keyboard()
+        reply_markup=get_test_menu_keyboard(lang)
     )
 
 
 @router.callback_query(F.data == "menu:test")
 async def show_test_menu(callback: CallbackQuery, state: FSMContext):
     """Show test menu"""
+    user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
+    
     await state.clear()
     await callback.message.edit_text(
-        "📝 *Test Mode*\n\nChoose a test type:",
+        get_text("test_menu_title", lang),
         parse_mode="Markdown",
-        reply_markup=get_test_menu_keyboard()
+        reply_markup=get_test_menu_keyboard(lang)
     )
     await callback.answer()
 
@@ -65,10 +82,13 @@ async def show_test_menu(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == "test:unit")
 async def test_unit_select_level(callback: CallbackQuery):
     """Select level for unit test"""
+    user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
+    
     await callback.message.edit_text(
-        "📝 *Unit Test*\n\nSelect a level:",
+        get_text("test_unit_select_level", lang),
         parse_mode="Markdown",
-        reply_markup=get_level_selection_keyboard("test")
+        reply_markup=get_level_selection_keyboard("test", lang)
     )
     await callback.answer()
 
@@ -76,14 +96,17 @@ async def test_unit_select_level(callback: CallbackQuery):
 @router.callback_query(F.data.startswith("test:level:"))
 async def test_select_unit(callback: CallbackQuery):
     """Select unit for test"""
+    user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
+    
     parts = callback.data.split(":")
     level = int(parts[2])
     page = int(parts[4]) if len(parts) > 4 and parts[3] == "page" else 0
     
     await callback.message.edit_text(
-        f"📝 *Level {level} Unit Test*\n\nSelect a unit:",
+        get_text("test_level_unit_select", lang, level=level),
         parse_mode="Markdown",
-        reply_markup=get_unit_selection_keyboard(level, "test", page)
+        reply_markup=get_unit_selection_keyboard(level, "test", page, lang)
     )
     await callback.answer()
 
@@ -97,14 +120,15 @@ async def start_unit_test(callback: CallbackQuery, state: FSMContext):
     unit = int(match.group(2))
     
     user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
     
     # Get words from the unit
     words = await get_unit_words(level, unit)
     
     if not words:
         await callback.message.edit_text(
-            f"❌ No words found for Level {level} Unit {unit}.",
-            reply_markup=get_back_button("test:unit")
+            get_text("error_no_words", lang, level=level, unit=unit),
+            reply_markup=get_back_button("test:unit", lang)
         )
         await callback.answer()
         return
@@ -129,8 +153,8 @@ async def start_unit_test(callback: CallbackQuery, state: FSMContext):
     
     if not questions:
         await callback.message.edit_text(
-            "❌ Could not generate test questions.",
-            reply_markup=get_back_button("test:unit")
+            get_text("test_generate_error", lang),
+            reply_markup=get_back_button("test:unit", lang)
         )
         await callback.answer()
         return
@@ -148,9 +172,9 @@ async def start_unit_test(callback: CallbackQuery, state: FSMContext):
     progress = session.get_progress()
     
     await callback.message.edit_text(
-        format_question(question, progress),
+        format_question(question, progress, lang),
         parse_mode="Markdown",
-        reply_markup=get_quiz_answer_keyboard(question.options, question.question_id)
+        reply_markup=get_quiz_answer_keyboard(question.options, question.question_id, lang)
     )
     await callback.answer()
 
@@ -160,12 +184,13 @@ async def start_unit_test(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == "test:level")
 async def test_level_select(callback: CallbackQuery):
     """Select level for level test"""
+    user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
+    
     await callback.message.edit_text(
-        "📚 *Level Test*\n\n"
-        "⚠️ This test covers ALL units in the level.\n\n"
-        "Select a level:",
+        get_text("test_level_select", lang),
         parse_mode="Markdown",
-        reply_markup=get_level_selection_keyboard("leveltest")
+        reply_markup=get_level_selection_keyboard("leveltest", lang)
     )
     await callback.answer()
 
@@ -175,14 +200,15 @@ async def start_level_test(callback: CallbackQuery, state: FSMContext):
     """Start level test"""
     level = int(callback.data.split(":")[-1])
     user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
     
     # Get all words from level
     words = await get_all_words_in_level(level)
     
     if not words:
         await callback.message.edit_text(
-            f"❌ No words found for Level {level}.",
-            reply_markup=get_back_button("test:level")
+            get_text("error_no_words_level", lang, level=level),
+            reply_markup=get_back_button("test:level", lang)
         )
         await callback.answer()
         return
@@ -222,15 +248,15 @@ async def start_level_test(callback: CallbackQuery, state: FSMContext):
     if question.question_type == QuestionType.FILL_BLANK:
         await state.set_state(TestStates.awaiting_fill_blank)
         await callback.message.edit_text(
-            format_question(question, progress) + "\n\n_Type your answer:_",
+            format_question(question, progress, lang) + f"\n\n_{get_text('type_your_answer', lang)}_",
             parse_mode="Markdown",
-            reply_markup=get_back_button("menu:test")
+            reply_markup=get_back_button("menu:test", lang)
         )
     else:
         await callback.message.edit_text(
-            format_question(question, progress),
+            format_question(question, progress, lang),
             parse_mode="Markdown",
-            reply_markup=get_quiz_answer_keyboard(question.options, question.question_id)
+            reply_markup=get_quiz_answer_keyboard(question.options, question.question_id, lang)
         )
     
     await callback.answer()
@@ -242,6 +268,7 @@ async def start_level_test(callback: CallbackQuery, state: FSMContext):
 async def start_review_test(callback: CallbackQuery, state: FSMContext):
     """Start review test (weak/forgotten words)"""
     user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
     
     vocab_manager = VocabularyManager(user_id)
     await vocab_manager.initialize()
@@ -251,11 +278,9 @@ async def start_review_test(callback: CallbackQuery, state: FSMContext):
     
     if not weak_words:
         await callback.message.edit_text(
-            "✨ *No Weak Words!*\n\n"
-            "Great job! You don't have any weak words to review.\n"
-            "Keep learning to add more words!",
+            get_text("no_weak_words", lang),
             parse_mode="Markdown",
-            reply_markup=get_back_button("menu:test")
+            reply_markup=get_back_button("menu:test", lang)
         )
         await callback.answer()
         return
@@ -280,9 +305,9 @@ async def start_review_test(callback: CallbackQuery, state: FSMContext):
     progress = session.get_progress()
     
     await callback.message.edit_text(
-        "🔄 *Review Test*\n\n" + format_question(question, progress),
+        get_text("review_test_title", lang) + "\n\n" + format_question(question, progress, lang),
         parse_mode="Markdown",
-        reply_markup=get_quiz_answer_keyboard(question.options, question.question_id)
+        reply_markup=get_quiz_answer_keyboard(question.options, question.question_id, lang)
     )
     await callback.answer()
 
@@ -292,6 +317,9 @@ async def start_review_test(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data.startswith("quiz:ans:"))
 async def handle_quiz_answer(callback: CallbackQuery, state: FSMContext):
     """Handle quiz answer selection"""
+    user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
+    
     parts = callback.data.split(":")
     question_id = parts[2]
     answer_idx = int(parts[3])
@@ -301,8 +329,8 @@ async def handle_quiz_answer(callback: CallbackQuery, state: FSMContext):
     
     if not session_data:
         await callback.message.edit_text(
-            "❌ Session expired. Please start a new test.",
-            reply_markup=get_back_button("menu:test")
+            get_text("session_expired", lang),
+            reply_markup=get_back_button("menu:test", lang)
         )
         await callback.answer()
         return
@@ -311,7 +339,7 @@ async def handle_quiz_answer(callback: CallbackQuery, state: FSMContext):
     question = session.get_current_question()
     
     if not question:
-        await show_test_results(callback, state, session)
+        await show_test_results(callback, state, session, lang)
         return
     
     # Get the selected answer
@@ -332,34 +360,37 @@ async def handle_quiz_answer(callback: CallbackQuery, state: FSMContext):
     
     # Show result
     if is_correct:
-        result_text = f"✅ *Correct!*\n\n*{question.word}*: {correct_answer}"
-        await callback.answer("✅ Correct!")
+        result_text = get_text("test_correct", lang) + f"*{question.word}*: {correct_answer}"
+        await callback.answer(get_text("correct", lang))
     else:
         result_text = (
-            f"❌ *Incorrect*\n\n"
-            f"Your answer: {selected_answer}\n"
-            f"Correct answer: *{correct_answer}*\n\n"
-            f"{get_random_encouragement()}"
+            get_text("test_wrong", lang) +
+            f"{get_text('your_answer', lang)}: {selected_answer}\n"
+            f"{get_text('correct_answer', lang)}: *{correct_answer}*\n\n"
+            f"{get_random_encouragement(lang)}"
         )
-        await callback.answer("❌ Incorrect")
+        await callback.answer(get_text("incorrect", lang))
     
     await callback.message.edit_text(
         result_text,
         parse_mode="Markdown",
-        reply_markup=get_quiz_continue_keyboard(is_correct)
+        reply_markup=get_quiz_continue_keyboard(is_correct, lang)
     )
 
 
 @router.callback_query(F.data == "quiz:next")
 async def quiz_next_question(callback: CallbackQuery, state: FSMContext):
     """Show next quiz question"""
+    user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
+    
     data = await state.get_data()
     session_data = data.get("test_session")
     
     if not session_data:
         await callback.message.edit_text(
-            "❌ Session expired. Please start a new test.",
-            reply_markup=get_back_button("menu:test")
+            get_text("session_expired", lang),
+            reply_markup=get_back_button("menu:test", lang)
         )
         await callback.answer()
         return
@@ -369,7 +400,7 @@ async def quiz_next_question(callback: CallbackQuery, state: FSMContext):
     
     if not question:
         # Test completed
-        await show_test_results(callback, state, session)
+        await show_test_results(callback, state, session, lang)
         return
     
     # Update session
@@ -380,15 +411,15 @@ async def quiz_next_question(callback: CallbackQuery, state: FSMContext):
     if question.question_type == QuestionType.FILL_BLANK:
         await state.set_state(TestStates.awaiting_fill_blank)
         await callback.message.edit_text(
-            format_question(question, progress) + "\n\n_Type your answer:_",
+            format_question(question, progress, lang) + f"\n\n_{get_text('type_your_answer', lang)}_",
             parse_mode="Markdown",
-            reply_markup=get_back_button("quiz:end")
+            reply_markup=get_back_button("quiz:end", lang)
         )
     else:
         await callback.message.edit_text(
-            format_question(question, progress),
+            format_question(question, progress, lang),
             parse_mode="Markdown",
-            reply_markup=get_quiz_answer_keyboard(question.options, question.question_id)
+            reply_markup=get_quiz_answer_keyboard(question.options, question.question_id, lang)
         )
     
     await callback.answer()
@@ -399,13 +430,16 @@ async def handle_fill_blank_answer(message: Message, state: FSMContext):
     """Handle fill-in-the-blank answer"""
     from modules.test_engine import evaluate_answer
     
+    user_id = message.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
+    
     data = await state.get_data()
     session_data = data.get("test_session")
     
     if not session_data:
         await message.answer(
-            "❌ Session expired. Please start a new test.",
-            reply_markup=get_back_button("menu:test")
+            get_text("session_expired", lang),
+            reply_markup=get_back_button("menu:test", lang)
         )
         return
     
@@ -413,7 +447,7 @@ async def handle_fill_blank_answer(message: Message, state: FSMContext):
     question = session.get_current_question()
     
     if not question:
-        await show_test_results_msg(message, state, session)
+        await show_test_results_msg(message, state, session, lang)
         return
     
     # Check answer
@@ -424,7 +458,6 @@ async def handle_fill_blank_answer(message: Message, state: FSMContext):
     session.answers[question.question_id] = user_answer
     
     # Update word status
-    user_id = message.from_user.id
     user_manager = UserDataManager(user_id)
     await user_manager.load()
     await user_manager.update_word_status(question.word_id, question.is_4000, is_correct)
@@ -436,30 +469,33 @@ async def handle_fill_blank_answer(message: Message, state: FSMContext):
     
     # Show result
     if is_correct:
-        result_text = f"✅ *Correct!*\n\nThe word is: *{question.correct_answer}*"
+        result_text = get_text("test_correct", lang) + f"{get_text('the_word_is', lang)}: *{question.correct_answer}*"
     else:
         result_text = (
-            f"❌ *Incorrect*\n\n"
-            f"Your answer: {user_answer}\n"
-            f"Correct answer: *{question.correct_answer}*\n\n"
-            f"{get_random_encouragement()}"
+            get_text("test_wrong", lang) +
+            f"{get_text('your_answer', lang)}: {user_answer}\n"
+            f"{get_text('correct_answer', lang)}: *{question.correct_answer}*\n\n"
+            f"{get_random_encouragement(lang)}"
         )
     
     await message.answer(
         result_text,
         parse_mode="Markdown",
-        reply_markup=get_quiz_continue_keyboard(is_correct)
+        reply_markup=get_quiz_continue_keyboard(is_correct, lang)
     )
 
 
-@router.callback_query(F.data == "quiz:skip")
+@router.callback_query(F.data.startswith("quiz:skip:"))
 async def skip_question(callback: CallbackQuery, state: FSMContext):
     """Skip current question"""
+    user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
+    
     data = await state.get_data()
     session_data = data.get("test_session")
     
     if not session_data:
-        await callback.answer("Session expired")
+        await callback.answer(get_text("session_expired", lang))
         return
     
     session = TestSession.from_dict(session_data)
@@ -475,60 +511,66 @@ async def skip_question(callback: CallbackQuery, state: FSMContext):
     await state.update_data(test_session=session.to_dict())
     
     if not question:
-        await show_test_results(callback, state, session)
+        await show_test_results(callback, state, session, lang)
         return
     
     progress = session.get_progress()
     
     await callback.message.edit_text(
-        format_question(question, progress),
+        format_question(question, progress, lang),
         parse_mode="Markdown",
-        reply_markup=get_quiz_answer_keyboard(question.options, question.question_id)
+        reply_markup=get_quiz_answer_keyboard(question.options, question.question_id, lang)
     )
-    await callback.answer("Skipped")
+    await callback.answer(get_text("skipped", lang))
 
 
 @router.callback_query(F.data.startswith("quiz:hint:"))
 async def show_hint(callback: CallbackQuery, state: FSMContext):
     """Show hint for current question"""
+    user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
+    
     data = await state.get_data()
     session_data = data.get("test_session")
     
     if not session_data:
-        await callback.answer("Session expired")
+        await callback.answer(get_text("session_expired", lang))
         return
     
     session = TestSession.from_dict(session_data)
     question = session.get_current_question()
     
     if question and question.hint:
-        await callback.answer(f"💡 Hint: {question.hint}", show_alert=True)
+        await callback.answer(f"💡 {get_text('hint', lang)}: {question.hint}", show_alert=True)
     elif question and question.example:
-        await callback.answer(f"💡 Example: {question.example}", show_alert=True)
+        await callback.answer(f"💡 {get_text('example', lang)}: {question.example}", show_alert=True)
     else:
-        await callback.answer("No hint available", show_alert=True)
+        await callback.answer(get_text("no_hint", lang), show_alert=True)
 
 
 @router.callback_query(F.data == "quiz:end")
 async def end_test_early(callback: CallbackQuery, state: FSMContext):
     """End test early"""
+    user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
+    
     data = await state.get_data()
     session_data = data.get("test_session")
     
     if session_data:
         session = TestSession.from_dict(session_data)
-        await show_test_results(callback, state, session)
+        await show_test_results(callback, state, session, lang)
     else:
         await callback.message.edit_text(
-            "Test ended.",
-            reply_markup=get_test_menu_keyboard()
+            get_text("test_ended", lang),
+            reply_markup=get_test_menu_keyboard(lang)
         )
         await state.clear()
     
     await callback.answer()
 
 
-async def show_test_results(callback: CallbackQuery, state: FSMContext, session: TestSession):
+async def show_test_results(callback: CallbackQuery, state: FSMContext, session: TestSession, lang: str = "en"):
     """Show test results"""
     result = session.get_results()
     
@@ -541,13 +583,13 @@ async def show_test_results(callback: CallbackQuery, state: FSMContext, session:
     await state.clear()
     
     await callback.message.edit_text(
-        format_result(result),
+        format_result(result, lang),
         parse_mode="Markdown",
-        reply_markup=get_test_result_keyboard()
+        reply_markup=get_test_result_keyboard(lang)
     )
 
 
-async def show_test_results_msg(message: Message, state: FSMContext, session: TestSession):
+async def show_test_results_msg(message: Message, state: FSMContext, session: TestSession, lang: str = "en"):
     """Show test results (from message handler)"""
     result = session.get_results()
     
@@ -560,19 +602,22 @@ async def show_test_results_msg(message: Message, state: FSMContext, session: Te
     await state.clear()
     
     await message.answer(
-        format_result(result),
+        format_result(result, lang),
         parse_mode="Markdown",
-        reply_markup=get_test_result_keyboard()
+        reply_markup=get_test_result_keyboard(lang)
     )
 
 
 @router.callback_query(F.data == "test:retry")
 async def retry_test(callback: CallbackQuery):
     """Retry the same test - redirect to test menu"""
+    user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
+    
     await callback.message.edit_text(
-        "📝 *Test Mode*\n\nChoose a test type:",
+        get_text("test_menu_title", lang),
         parse_mode="Markdown",
-        reply_markup=get_test_menu_keyboard()
+        reply_markup=get_test_menu_keyboard(lang)
     )
     await callback.answer()
 
@@ -580,4 +625,7 @@ async def retry_test(callback: CallbackQuery):
 @router.callback_query(F.data == "test:details")
 async def show_test_details(callback: CallbackQuery):
     """Show detailed test results"""
-    await callback.answer("Detailed results coming soon!", show_alert=True)
+    user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
+    
+    await callback.answer(get_text("coming_soon", lang), show_alert=True)

@@ -2,18 +2,42 @@
 Helper utilities for the bot
 """
 import random
-from typing import List
+from typing import List, Optional
 import config
+from locales import get_text
+from aiogram.types import Message, InlineKeyboardMarkup
+from aiogram.exceptions import TelegramBadRequest
 
 
-def get_random_motivation() -> str:
-    """Get a random motivation message"""
-    return random.choice(config.MOTIVATION_MESSAGES)
+async def safe_edit_text(
+    message: Message,
+    text: str,
+    parse_mode: Optional[str] = None,
+    reply_markup: Optional[InlineKeyboardMarkup] = None
+) -> bool:
+    """
+    Safely edit a message, ignoring 'message is not modified' errors.
+    Returns True if edit was successful, False if message was unchanged.
+    """
+    try:
+        await message.edit_text(text, parse_mode=parse_mode, reply_markup=reply_markup)
+        return True
+    except TelegramBadRequest as e:
+        if "message is not modified" in str(e):
+            return False
+        raise
 
 
-def get_random_encouragement() -> str:
-    """Get a random encouragement message"""
-    return random.choice(config.ENCOURAGEMENT_MESSAGES)
+def get_random_motivation(lang: str = "en") -> str:
+    """Get a random motivation message in the specified language"""
+    motivation_keys = ["motivation_1", "motivation_2", "motivation_3", "motivation_4", "motivation_5"]
+    return get_text(random.choice(motivation_keys), lang)
+
+
+def get_random_encouragement(lang: str = "en") -> str:
+    """Get a random encouragement message in the specified language"""
+    encouragement_keys = ["encouragement_1", "encouragement_2", "encouragement_3", "encouragement_4", "encouragement_5"]
+    return get_text(random.choice(encouragement_keys), lang)
 
 
 def truncate_text(text: str, max_length: int = 200) -> str:
@@ -74,33 +98,63 @@ def safe_markdown(text: str) -> str:
     return text.replace('_', '\\_').replace('*', '\\*').replace('`', '\\`').replace('[', '\\[')
 
 
-def validate_word_input(word: str) -> tuple:
+# Validation error messages
+VALIDATION_ERRORS = {
+    "word_empty": {
+        "en": "Word cannot be empty",
+        "uz": "So'z bo'sh bo'lishi mumkin emas",
+        "ru": "Слово не может быть пустым",
+    },
+    "word_too_long": {
+        "en": "Word is too long (max 100 characters)",
+        "uz": "So'z juda uzun (maksimum 100 belgi)",
+        "ru": "Слово слишком длинное (макс. 100 символов)",
+    },
+    "word_no_letters": {
+        "en": "Word must contain at least one letter",
+        "uz": "So'zda kamida bitta harf bo'lishi kerak",
+        "ru": "Слово должно содержать хотя бы одну букву",
+    },
+    "meaning_empty": {
+        "en": "Meaning cannot be empty",
+        "uz": "Ma'no bo'sh bo'lishi mumkin emas",
+        "ru": "Значение не может быть пустым",
+    },
+    "meaning_too_long": {
+        "en": "Meaning is too long (max 500 characters)",
+        "uz": "Ma'no juda uzun (maksimum 500 belgi)",
+        "ru": "Значение слишком длинное (макс. 500 символов)",
+    },
+}
+
+
+def validate_word_input(word: str, lang: str = "en") -> tuple:
     """
     Validate word input
     Returns: (is_valid, error_message or None)
     """
     if not word or not word.strip():
-        return False, "Word cannot be empty"
+        return False, VALIDATION_ERRORS["word_empty"].get(lang, VALIDATION_ERRORS["word_empty"]["en"])
     
     if len(word) > 100:
-        return False, "Word is too long (max 100 characters)"
+        return False, VALIDATION_ERRORS["word_too_long"].get(lang, VALIDATION_ERRORS["word_too_long"]["en"])
     
     if not any(c.isalpha() for c in word):
-        return False, "Word must contain at least one letter"
+        return False, VALIDATION_ERRORS["word_no_letters"].get(lang, VALIDATION_ERRORS["word_no_letters"]["en"])
     
     return True, None
 
 
-def validate_meaning_input(meaning: str) -> tuple:
+def validate_meaning_input(meaning: str, lang: str = "en") -> tuple:
     """
     Validate meaning input
     Returns: (is_valid, error_message or None)
     """
     if not meaning or not meaning.strip():
-        return False, "Meaning cannot be empty"
+        return False, VALIDATION_ERRORS["meaning_empty"].get(lang, VALIDATION_ERRORS["meaning_empty"]["en"])
     
     if len(meaning) > 500:
-        return False, "Meaning is too long (max 500 characters)"
+        return False, VALIDATION_ERRORS["meaning_too_long"].get(lang, VALIDATION_ERRORS["meaning_too_long"]["en"])
     
     return True, None
 

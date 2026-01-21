@@ -225,62 +225,68 @@ class ProgressTracker:
         }
 
 
-def format_stats_message(stats: Dict) -> str:
+def format_stats_message(stats: Dict, lang: str = "en") -> str:
     """Format statistics for display"""
+    from locales import get_text
+    
     lines = [
-        "📊 *Your Learning Statistics*\n",
-        f"📚 *Words Progress:*",
-        f"   • Learning: {stats.get('words_learning', 0)}",
-        f"   • Known: {stats.get('words_known', 0)}",
-        f"   • Mastered: {stats.get('words_mastered', 0)} ⭐",
-        f"   • Need Review: {stats.get('words_weak', 0)} ⚠️",
+        get_text("stats_title", lang) + "\n",
+        f"📚 *{get_text('stats_words_progress', lang)}:*",
+        f"   • {get_text('learning', lang)}: {stats.get('words_learning', 0)}",
+        f"   • {get_text('known', lang)}: {stats.get('words_known', 0)}",
+        f"   • {get_text('mastered', lang)}: {stats.get('words_mastered', 0)} ⭐",
+        f"   • {get_text('need_review', lang)}: {stats.get('words_weak', 0)} ⚠️",
         "",
-        f"📝 *Activity:*",
-        f"   • Total Reviews: {stats.get('total_reviews', 0)}",
-        f"   • Tests Taken: {stats.get('total_tests', 0)}",
-        f"   • Accuracy: {stats.get('accuracy', 0):.1f}%",
+        f"📝 *{get_text('activity', lang)}:*",
+        f"   • {get_text('total_reviews', lang)}: {stats.get('total_reviews', 0)}",
+        f"   • {get_text('tests_taken', lang)}: {stats.get('total_tests', 0)}",
+        f"   • {get_text('accuracy', lang)}: {stats.get('accuracy', 0):.1f}%",
         "",
-        f"🔥 *Streak:*",
-        f"   • Current: {stats.get('current_streak', 0)} days",
-        f"   • Longest: {stats.get('longest_streak', 0)} days",
+        f"🔥 *{get_text('streak', lang)}:*",
+        f"   • {get_text('current', lang)}: {stats.get('current_streak', 0)} {get_text('days', lang)}",
+        f"   • {get_text('longest', lang)}: {stats.get('longest_streak', 0)} {get_text('days', lang)}",
     ]
     
     if stats.get('custom_words_count', 0) > 0:
-        lines.append(f"\n✏️ Custom Words: {stats['custom_words_count']}")
+        lines.append(f"\n✏️ {get_text('custom_words', lang)}: {stats['custom_words_count']}")
     
     return "\n".join(lines)
 
 
-def format_level_progress(progress: Dict) -> str:
+def format_level_progress(progress: Dict, lang: str = "en") -> str:
     """Format level progress for display"""
+    from locales import get_text
+    
     pct = progress.get("progress_percentage", 0)
     bar = create_progress_bar(pct)
     
     return (
-        f"📘 *Level {progress['level']} Progress*\n\n"
+        f"📘 *{get_text('level', lang)} {progress['level']} {get_text('progress', lang)}*\n\n"
         f"{bar} {pct:.1f}%\n\n"
-        f"📖 Words Started: {progress['started']}/{progress['expected_total']}\n"
-        f"📚 Learning: {progress['learning']}\n"
-        f"✅ Known: {progress['known']}\n"
-        f"⭐ Mastered: {progress['mastered']}\n"
-        f"⚠️ Need Review: {progress['weak']}"
+        f"📖 {get_text('words_started', lang)}: {progress['started']}/{progress['expected_total']}\n"
+        f"📚 {get_text('learning', lang)}: {progress['learning']}\n"
+        f"✅ {get_text('known', lang)}: {progress['known']}\n"
+        f"⭐ {get_text('mastered', lang)}: {progress['mastered']}\n"
+        f"⚠️ {get_text('need_review', lang)}: {progress['weak']}"
     )
 
 
-def format_unit_progress(progress: Dict) -> str:
+def format_unit_progress(progress: Dict, lang: str = "en") -> str:
     """Format unit progress for display"""
+    from locales import get_text
+    
     pct = progress.get("progress_percentage", 0)
     bar = create_progress_bar(pct)
-    status = "✅ Completed" if progress.get("is_completed") else "📖 In Progress"
+    status = f"✅ {get_text('completed', lang)}" if progress.get("is_completed") else f"📖 {get_text('in_progress', lang)}"
     
     return (
-        f"📗 *Level {progress['level']} • Unit {progress['unit']}*\n\n"
+        f"📗 *{get_text('level', lang)} {progress['level']} • {get_text('unit', lang)} {progress['unit']}*\n\n"
         f"{bar} {pct:.1f}%\n"
-        f"Status: {status}\n\n"
-        f"📚 Learning: {progress['learning']}/{progress['total']}\n"
-        f"✅ Known: {progress['known']}\n"
-        f"⭐ Mastered: {progress['mastered']}\n"
-        f"⚠️ Need Review: {progress['weak']}"
+        f"{get_text('status', lang)}: {status}\n\n"
+        f"📚 {get_text('learning', lang)}: {progress['learning']}/{progress['total']}\n"
+        f"✅ {get_text('known', lang)}: {progress['known']}\n"
+        f"⭐ {get_text('mastered', lang)}: {progress['mastered']}\n"
+        f"⚠️ {get_text('need_review', lang)}: {progress['weak']}"
     )
 
 
@@ -291,35 +297,37 @@ def create_progress_bar(percentage: float, length: int = 10) -> str:
     return "█" * filled + "░" * empty
 
 
-def format_streak_message(streak_info: Dict) -> str:
+def format_streak_message(streak_info: Dict, lang: str = "en") -> str:
     """Format streak information for display"""
+    from locales import get_text
+    
     emoji = streak_info.get("streak_emoji", "📚")
     current = streak_info.get("current_streak", 0)
     longest = streak_info.get("longest_streak", 0)
     
     lines = [
-        f"{emoji} *Your Learning Streak*\n",
-        f"🔥 Current Streak: *{current} days*",
-        f"🏆 Longest Streak: *{longest} days*",
+        f"{emoji} *{get_text('your_learning_streak', lang)}*\n",
+        f"🔥 {get_text('current_streak', lang)}: *{current} {get_text('days', lang)}*",
+        f"🏆 {get_text('longest_streak', lang)}: *{longest} {get_text('days', lang)}*",
     ]
     
     if streak_info.get("streak_at_risk"):
         hours = streak_info.get("hours_until_reset", 0)
         if hours > 0:
-            lines.append(f"\n⚠️ *Streak at risk!* Study now to keep your streak!")
+            lines.append(f"\n⚠️ *{get_text('streak_at_risk', lang)}*")
         else:
-            lines.append(f"\n😔 Your streak has reset. Start a new one today!")
+            lines.append(f"\n😔 {get_text('streak_reset', lang)}")
     elif current > 0:
-        lines.append(f"\n✨ Keep it up! Study today to extend your streak!")
+        lines.append(f"\n✨ {get_text('keep_it_up', lang)}")
     else:
-        lines.append(f"\n💪 Start your streak today! Learn some words now!")
+        lines.append(f"\n💪 {get_text('start_streak', lang)}")
     
     # Motivational messages based on streak
     if current >= 30:
-        lines.append("\n🎉 Amazing! You're a vocabulary champion!")
+        lines.append(f"\n🎉 {get_text('streak_30_days', lang)}")
     elif current >= 14:
-        lines.append("\n⚡ Two weeks strong! You're unstoppable!")
+        lines.append(f"\n⚡ {get_text('streak_14_days', lang)}")
     elif current >= 7:
-        lines.append("\n🌟 A whole week! Great consistency!")
+        lines.append(f"\n🌟 {get_text('streak_7_days', lang)}")
     
     return "\n".join(lines)

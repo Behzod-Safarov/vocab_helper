@@ -350,13 +350,15 @@ class QuestionGenerator:
         return questions
 
 
-def format_question(question: Question, show_progress: Tuple[int, int] = None) -> str:
+def format_question(question: Question, show_progress: Tuple[int, int] = None, lang: str = "en") -> str:
     """Format a question for display in Telegram"""
+    from locales import get_text
+    
     lines = []
     
     if show_progress:
         current, total = show_progress
-        lines.append(f"📝 Question {current + 1}/{total}\n")
+        lines.append(get_text("test_question_progress", lang, current=current + 1, total=total) + "\n")
     
     lines.append(question.question_text)
     
@@ -369,28 +371,30 @@ def format_question(question: Question, show_progress: Tuple[int, int] = None) -
     return "\n".join(lines)
 
 
-def format_result(result: TestResult) -> str:
+def format_result(result: TestResult, lang: str = "en") -> str:
     """Format test results for display"""
+    from locales import get_text
+    
     lines = [
-        "📊 *Test Results*\n",
-        f"✅ Correct: {result.correct_answers}",
-        f"❌ Wrong: {result.wrong_answers}",
-        f"📈 Score: {result.score_percentage:.1f}%",
-        f"⏱ Time: {result.time_taken // 60}m {result.time_taken % 60}s",
+        get_text("test_results_title", lang) + "\n",
+        f"✅ {get_text('correct_count', lang)}: {result.correct_answers}",
+        f"❌ {get_text('wrong_count', lang)}: {result.wrong_answers}",
+        f"📈 {get_text('score', lang)}: {result.score_percentage:.1f}%",
+        f"⏱ {get_text('time', lang)}: {result.time_taken // 60}{get_text('min', lang)} {result.time_taken % 60}{get_text('sec', lang)}",
     ]
     
     if result.level and result.unit:
-        lines.insert(1, f"📚 Level {result.level} • Unit {result.unit}\n")
+        lines.insert(1, f"📚 {get_text('level', lang)} {result.level} • {get_text('unit', lang)} {result.unit}\n")
     
     # Add emoji based on score
     if result.score_percentage >= 90:
-        lines.append("\n🏆 Excellent! You've mastered these words!")
+        lines.append("\n" + get_text("result_excellent", lang))
     elif result.score_percentage >= 70:
-        lines.append("\n⭐ Great job! Keep up the good work!")
+        lines.append("\n" + get_text("result_great", lang))
     elif result.score_percentage >= 50:
-        lines.append("\n💪 Good effort! Keep practicing!")
+        lines.append("\n" + get_text("result_good", lang))
     else:
-        lines.append("\n📚 Don't worry! Review these words and try again!")
+        lines.append("\n" + get_text("result_keep_trying", lang))
     
     return "\n".join(lines)
 

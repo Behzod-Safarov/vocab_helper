@@ -11,14 +11,26 @@ from storage.json_storage import UserDataManager
 from modules.spaced_repetition import SpacedRepetitionScheduler
 from keyboards.inline import get_review_menu_keyboard, get_back_button
 from utils.helpers import get_random_motivation
+from locales import get_text
 
 router = Router()
+
+
+async def get_user_settings(user_id: int):
+    """Get user language and translation settings"""
+    user_manager = UserDataManager(user_id)
+    await user_manager.load()
+    settings = user_manager.data.get("settings", {})
+    lang = settings.get("language", "en")
+    trans_lang = settings.get("translation_language", "both")
+    return lang, trans_lang
 
 
 @router.message(Command("review"))
 async def cmd_review(message: Message):
     """Handle /review command"""
     user_id = message.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
     
     user_manager = UserDataManager(user_id)
     await user_manager.load()
@@ -29,23 +41,14 @@ async def cmd_review(message: Message):
     due_count = len(due_words)
     
     if due_count == 0:
-        text = (
-            "🔄 *Review Mode*\n\n"
-            "✨ You're all caught up!\n\n"
-            "No words are due for review right now.\n"
-            "Keep learning new words or check back later!"
-        )
+        text = get_text("review_no_words_due", lang)
     else:
-        text = (
-            "🔄 *Review Mode*\n\n"
-            f"📚 You have *{due_count}* words due for review!\n\n"
-            "Regular review helps you remember words better."
-        )
+        text = get_text("review_words_due", lang, count=due_count)
     
     await message.answer(
         text,
         parse_mode="Markdown",
-        reply_markup=get_review_menu_keyboard(due_count)
+        reply_markup=get_review_menu_keyboard(due_count, lang)
     )
 
 
@@ -53,6 +56,7 @@ async def cmd_review(message: Message):
 async def show_review_menu(callback: CallbackQuery):
     """Show review menu"""
     user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
     
     user_manager = UserDataManager(user_id)
     await user_manager.load()
@@ -63,21 +67,14 @@ async def show_review_menu(callback: CallbackQuery):
     due_count = len(due_words)
     
     if due_count == 0:
-        text = (
-            "🔄 *Review Mode*\n\n"
-            "✨ You're all caught up!\n"
-            "No words due for review."
-        )
+        text = get_text("review_no_words_due_short", lang)
     else:
-        text = (
-            "🔄 *Review Mode*\n\n"
-            f"📚 *{due_count}* words due for review"
-        )
+        text = get_text("review_words_due_short", lang, count=due_count)
     
     await callback.message.edit_text(
         text,
         parse_mode="Markdown",
-        reply_markup=get_review_menu_keyboard(due_count)
+        reply_markup=get_review_menu_keyboard(due_count, lang)
     )
     await callback.answer()
 
@@ -94,6 +91,7 @@ async def start_review_session(callback: CallbackQuery, state: FSMContext):
 async def show_weak_words(callback: CallbackQuery):
     """Show weak words that need attention"""
     user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
     
     user_manager = UserDataManager(user_id)
     await user_manager.load()
@@ -107,11 +105,9 @@ async def show_weak_words(callback: CallbackQuery):
     
     if not weak_words:
         await callback.message.edit_text(
-            "⚠️ *Weak Words*\n\n"
-            "✨ Great news! You don't have any weak words.\n\n"
-            "Keep practicing to maintain your knowledge!",
+            get_text("no_weak_words_review", lang),
             parse_mode="Markdown",
-            reply_markup=get_back_button("menu:review")
+            reply_markup=get_back_button("menu:review", lang)
         )
     else:
         # Parse some word IDs for display
@@ -124,13 +120,9 @@ async def show_weak_words(callback: CallbackQuery):
                 word_info.append(f"• L{parsed['level']} U{parsed['unit']} W{parsed['word_index']}")
         
         await callback.message.edit_text(
-            f"⚠️ *Weak Words* ({len(weak_words)} total)\n\n"
-            f"These words need more practice:\n\n"
-            f"{chr(10).join(word_info)}\n"
-            f"{'...' if len(weak_words) > 10 else ''}\n\n"
-            "Take a review test to practice them!",
+            get_text("weak_words_list", lang, count=len(weak_words), word_list=chr(10).join(word_info), more="..." if len(weak_words) > 10 else ""),
             parse_mode="Markdown",
-            reply_markup=get_back_button("menu:review")
+            reply_markup=get_back_button("menu:review", lang)
         )
     
     await callback.answer()
@@ -140,6 +132,7 @@ async def show_weak_words(callback: CallbackQuery):
 async def show_review_schedule(callback: CallbackQuery):
     """Show upcoming review schedule"""
     user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
     
     user_manager = UserDataManager(user_id)
     await user_manager.load()
@@ -162,10 +155,8 @@ async def show_review_schedule(callback: CallbackQuery):
             schedule_lines.append(f"{day_name}: - (0)")
     
     await callback.message.edit_text(
-        "📅 *Review Schedule (7 Days)*\n\n"
-        f"```\n{chr(10).join(schedule_lines)}\n```\n\n"
-        "Regular review helps you remember!",
+        get_text("review_schedule_title", lang) + f"\n\n```\n{chr(10).join(schedule_lines)}\n```\n\n" + get_text("review_schedule_tip", lang),
         parse_mode="Markdown",
-        reply_markup=get_back_button("menu:review")
+        reply_markup=get_back_button("menu:review", lang)
     )
     await callback.answer()

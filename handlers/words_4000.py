@@ -16,34 +16,45 @@ from keyboards.inline import (
     get_back_button,
 )
 from utils.helpers import get_level_description
+from locales import get_text
 import config
 
 router = Router()
 
 
+async def get_user_settings(user_id: int):
+    """Get user language and translation settings"""
+    user_manager = UserDataManager(user_id)
+    await user_manager.load()
+    settings = user_manager.data.get("settings", {})
+    lang = settings.get("language", "en")
+    trans_lang = settings.get("translation_language", "both")
+    return lang, trans_lang
+
+
 @router.message(Command("4000words"))
 async def cmd_4000words(message: Message):
     """Handle /4000words command"""
+    user_id = message.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
+    
     await message.answer(
-        "📘 *4000 Essential English Words*\n\n"
-        "Master vocabulary across 6 levels, from beginner to advanced.\n\n"
-        "• 6 Levels\n"
-        "• 30 Units per level\n"
-        "• ~20 Words per unit\n\n"
-        "What would you like to do?",
+        get_text("4000_words_title", lang),
         parse_mode="Markdown",
-        reply_markup=get_4000_words_menu_keyboard()
+        reply_markup=get_4000_words_menu_keyboard(lang)
     )
 
 
 @router.callback_query(F.data == "menu:4000words")
 async def show_4000_menu(callback: CallbackQuery):
     """Show 4000 words menu"""
+    user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
+    
     await callback.message.edit_text(
-        "📘 *4000 Essential English Words*\n\n"
-        "What would you like to do?",
+        get_text("4000_words_menu", lang),
         parse_mode="Markdown",
-        reply_markup=get_4000_words_menu_keyboard()
+        reply_markup=get_4000_words_menu_keyboard(lang)
     )
     await callback.answer()
 
@@ -52,6 +63,7 @@ async def show_4000_menu(callback: CallbackQuery):
 async def browse_levels(callback: CallbackQuery):
     """Browse all levels"""
     user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
     
     user_manager = UserDataManager(user_id)
     await user_manager.load()
@@ -59,7 +71,7 @@ async def browse_levels(callback: CallbackQuery):
     tracker = ProgressTracker(user_manager.data)
     
     # Build level overview
-    lines = ["📘 *4000 Essential Words*\n"]
+    lines = [f"📘 *{get_text('4000_essential_words', lang)}*\n"]
     
     for level in range(1, config.LEVELS + 1):
         progress = tracker.get_level_progress(level)
@@ -70,13 +82,13 @@ async def browse_levels(callback: CallbackQuery):
         bar = "█" * filled + "░" * (10 - filled)
         
         desc = get_level_description(level)
-        lines.append(f"*Level {level}*: {bar} {pct:.0f}%")
+        lines.append(f"*{get_text('level', lang)} {level}*: {bar} {pct:.0f}%")
         lines.append(f"_{desc}_\n")
     
     await callback.message.edit_text(
         "\n".join(lines),
         parse_mode="Markdown",
-        reply_markup=get_level_selection_keyboard("browse")
+        reply_markup=get_level_selection_keyboard("browse", lang)
     )
     await callback.answer()
 
@@ -84,11 +96,12 @@ async def browse_levels(callback: CallbackQuery):
 @router.callback_query(F.data.startswith("browse:level:"))
 async def browse_level_units(callback: CallbackQuery):
     """Browse units in a level"""
+    user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
+    
     parts = callback.data.split(":")
     level = int(parts[2])
     page = int(parts[4]) if len(parts) > 4 and parts[3] == "page" else 0
-    
-    user_id = callback.from_user.id
     
     vocab_manager = VocabularyManager(user_id)
     await vocab_manager.initialize()
@@ -99,15 +112,15 @@ async def browse_level_units(callback: CallbackQuery):
     desc = get_level_description(level)
     
     await callback.message.edit_text(
-        f"📘 *Level {level}*\n"
+        f"📘 *{get_text('level', lang)} {level}*\n"
         f"_{desc}_\n\n"
-        f"📊 Progress: {progress['completion_rate']:.1f}%\n"
-        f"✅ Learned: {progress['learned']}/{progress['total_words']}\n"
-        f"⭐ Mastered: {progress['mastered']}\n"
-        f"⚠️ Weak: {progress['weak']}\n\n"
-        f"Select a unit:",
+        f"📊 {get_text('progress', lang)}: {progress['completion_rate']:.1f}%\n"
+        f"✅ {get_text('learned', lang)}: {progress['learned']}/{progress['total_words']}\n"
+        f"⭐ {get_text('mastered', lang)}: {progress['mastered']}\n"
+        f"⚠️ {get_text('weak', lang)}: {progress['weak']}\n\n"
+        f"{get_text('select_unit', lang)}:",
         parse_mode="Markdown",
-        reply_markup=get_unit_selection_keyboard(level, "browse", page)
+        reply_markup=get_unit_selection_keyboard(level, "browse", page, lang)
     )
     await callback.answer()
 
@@ -121,6 +134,7 @@ async def browse_unit_words(callback: CallbackQuery):
     unit = int(match.group(2))
     
     user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
     
     vocab_manager = VocabularyManager(user_id)
     await vocab_manager.initialize()
@@ -130,9 +144,8 @@ async def browse_unit_words(callback: CallbackQuery):
     
     if not words:
         await callback.message.edit_text(
-            f"❌ No words found for Level {level} Unit {unit}.\n\n"
-            "The word data may not be loaded yet.",
-            reply_markup=get_back_button(f"browse:level:{level}")
+            get_text("error_no_words", lang, level=level, unit=unit),
+            reply_markup=get_back_button(f"browse:level:{level}", lang)
         )
         await callback.answer()
         return
@@ -146,18 +159,18 @@ async def browse_unit_words(callback: CallbackQuery):
         word_list.append(f"• {word.get('word', 'Unknown')}")
     
     if len(words) > 10:
-        word_list.append(f"...and {len(words) - 10} more")
+        word_list.append(f"...{get_text('and_more', lang, count=len(words) - 10)}")
     
     await callback.message.edit_text(
-        f"📗 *Level {level} • Unit {unit}*\n\n"
-        f"📊 Progress: {progress['completion_rate']:.1f}%\n"
-        f"📚 Words: {progress['total']}\n"
-        f"✅ Known: {progress['known']}\n"
-        f"⭐ Mastered: {progress['mastered']}\n\n"
-        f"*Words in this unit:*\n"
+        f"📗 *{get_text('level', lang)} {level} • {get_text('unit', lang)} {unit}*\n\n"
+        f"📊 {get_text('progress', lang)}: {progress['completion_rate']:.1f}%\n"
+        f"📚 {get_text('words', lang)}: {progress['total']}\n"
+        f"✅ {get_text('known', lang)}: {progress['known']}\n"
+        f"⭐ {get_text('mastered', lang)}: {progress['mastered']}\n\n"
+        f"*{get_text('words_in_unit', lang)}:*\n"
         + "\n".join(word_list),
         parse_mode="Markdown",
-        reply_markup=get_back_button(f"browse:level:{level}")
+        reply_markup=get_back_button(f"browse:level:{level}", lang)
     )
     await callback.answer()
 
@@ -166,6 +179,7 @@ async def browse_unit_words(callback: CallbackQuery):
 async def continue_learning(callback: CallbackQuery):
     """Continue learning from where user left off"""
     user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
     
     user_manager = UserDataManager(user_id)
     await user_manager.load()
@@ -175,12 +189,9 @@ async def continue_learning(callback: CallbackQuery):
     current_unit = progress.get("current_unit", 1)
     
     await callback.message.edit_text(
-        f"📖 *Continue Learning*\n\n"
-        f"You're currently on:\n"
-        f"📘 Level {current_level} • Unit {current_unit}\n\n"
-        f"Ready to continue?",
+        get_text("continue_learning", lang, level=current_level, unit=current_unit),
         parse_mode="Markdown",
-        reply_markup=get_back_button(f"learn:L{current_level}U{current_unit}")
+        reply_markup=get_back_button(f"learn:L{current_level}U{current_unit}", lang)
     )
     await callback.answer()
 
@@ -188,12 +199,15 @@ async def continue_learning(callback: CallbackQuery):
 @router.callback_query(F.data == "4000:test")
 async def test_4000(callback: CallbackQuery):
     """Redirect to test menu for 4000 words"""
+    user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
+    
     from keyboards.inline import get_test_menu_keyboard
     
     await callback.message.edit_text(
-        "📝 *4000 Words Test*\n\nChoose a test type:",
+        get_text("4000_test_title", lang),
         parse_mode="Markdown",
-        reply_markup=get_test_menu_keyboard()
+        reply_markup=get_test_menu_keyboard(lang)
     )
     await callback.answer()
 
@@ -202,6 +216,7 @@ async def test_4000(callback: CallbackQuery):
 async def show_4000_progress(callback: CallbackQuery):
     """Show overall 4000 words progress"""
     user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
     
     user_manager = UserDataManager(user_id)
     await user_manager.load()
@@ -213,7 +228,7 @@ async def show_4000_progress(callback: CallbackQuery):
     learned_words = 0
     mastered_words = 0
     
-    lines = ["📊 *4000 Words Progress*\n"]
+    lines = [f"📊 *{get_text('4000_progress_title', lang)}*\n"]
     
     for level in range(1, config.LEVELS + 1):
         progress = tracker.get_level_progress(level)
@@ -227,13 +242,13 @@ async def show_4000_progress(callback: CallbackQuery):
     
     overall_pct = (learned_words / total_words * 100) if total_words > 0 else 0
     
-    lines.insert(1, f"\n*Overall: {overall_pct:.1f}%*")
-    lines.insert(2, f"📚 Learned: {learned_words}/{total_words}")
-    lines.insert(3, f"⭐ Mastered: {mastered_words}\n")
+    lines.insert(1, f"\n*{get_text('overall', lang)}: {overall_pct:.1f}%*")
+    lines.insert(2, f"📚 {get_text('learned', lang)}: {learned_words}/{total_words}")
+    lines.insert(3, f"⭐ {get_text('mastered', lang)}: {mastered_words}\n")
     
     await callback.message.edit_text(
         "\n".join(lines),
         parse_mode="Markdown",
-        reply_markup=get_back_button("menu:4000words")
+        reply_markup=get_back_button("menu:4000words", lang)
     )
     await callback.answer()

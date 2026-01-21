@@ -262,8 +262,23 @@ class VocabularyManager:
         return words_to_learn
 
 
-def format_word_for_display(word: Dict, show_answer: bool = False) -> str:
-    """Format a word for display in Telegram"""
+def format_word_for_display(
+    word: Dict, 
+    show_answer: bool = False, 
+    lang: str = "en",
+    translation_lang: str = "both"
+) -> str:
+    """
+    Format a word for display in Telegram
+    
+    Args:
+        word: Word dictionary with word data
+        show_answer: Whether to show the meaning
+        lang: Interface language (en, uz, ru)
+        translation_lang: Translation to show (both, uz, ru, none)
+    """
+    from locales import get_text
+    
     lines = []
     
     lines.append(f"📚 *{word.get('word', 'Unknown')}*")
@@ -272,14 +287,22 @@ def format_word_for_display(word: Dict, show_answer: bool = False) -> str:
         lines.append(f"_{word['part_of_speech']}_")
     
     if show_answer or word.get("show_meaning", True):
-        lines.append(f"\n📖 *Meaning:* {word.get('meaning', 'N/A')}")
+        # English meaning
+        lines.append(f"\n{get_text('meaning_label', lang)} {word.get('meaning', 'N/A')}")
+        
+        # Translations based on user setting
+        if translation_lang in ["both", "uz"] and word.get("meaningUz"):
+            lines.append(f"{get_text('meaning_uz_label', lang)} {word['meaningUz']}")
+        
+        if translation_lang in ["both", "ru"] and word.get("meaningRu"):
+            lines.append(f"{get_text('meaning_ru_label', lang)} {word['meaningRu']}")
     
     if word.get("example"):
-        lines.append(f"\n💬 *Example:* _{word['example']}_")
+        lines.append(f"\n{get_text('example_label', lang)} _{word['example']}_")
     
     if word.get("synonyms"):
         synonyms = ", ".join(word["synonyms"][:3])
-        lines.append(f"\n🔄 *Synonyms:* {synonyms}")
+        lines.append(f"\n{get_text('synonyms_label', lang)} {synonyms}")
     
     if word.get("antonyms"):
         antonyms = ", ".join(word["antonyms"][:3])
@@ -291,7 +314,7 @@ def format_word_for_display(word: Dict, show_answer: bool = False) -> str:
     return "\n".join(lines)
 
 
-def format_word_card(word: Dict) -> str:
+def format_word_card(word: Dict, lang: str = "en") -> str:
     """Format word as a flashcard (word only, no meaning)"""
     lines = [
         f"📚 *{word.get('word', 'Unknown')}*",
@@ -300,6 +323,11 @@ def format_word_card(word: Dict) -> str:
     if word.get("part_of_speech"):
         lines.append(f"_{word['part_of_speech']}_")
     
-    lines.append("\n🤔 Do you remember this word?")
+    prompts = {
+        "en": "\n🤔 Do you remember this word?",
+        "uz": "\n🤔 Bu so'zni eslaysizmi?",
+        "ru": "\n🤔 Вы помните это слово?"
+    }
+    lines.append(prompts.get(lang, prompts["en"]))
     
     return "\n".join(lines)

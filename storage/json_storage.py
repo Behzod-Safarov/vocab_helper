@@ -33,6 +33,8 @@ def get_default_user_data(user_id: int, username: str = None) -> Dict:
         "created_at": datetime.now().isoformat(),
         "last_active": datetime.now().isoformat(),
         "settings": {
+            "language": "en",  # Interface language: en, uz, ru
+            "translation_language": "both",  # Translation display: both, uz, ru, none
             "daily_new_words": config.DAILY_NEW_WORDS,
             "daily_review_words": config.DAILY_REVIEW_WORDS,
             "notifications_enabled": True,

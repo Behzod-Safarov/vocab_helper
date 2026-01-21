@@ -7,6 +7,7 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+from aiogram.exceptions import TelegramBadRequest
 
 from storage.json_storage import UserDataManager, get_unit_words
 from modules.vocabulary import VocabularyManager, format_word_for_display, format_word_card
@@ -21,6 +22,7 @@ from keyboards.inline import (
     get_back_button,
 )
 from utils.helpers import get_random_motivation, get_random_encouragement, create_word_id
+from locales import get_text
 import config
 
 router = Router()
@@ -39,23 +41,39 @@ class LearnSessionStates(StatesGroup):
     learning = State()
 
 
+async def get_user_settings(user_id: int) -> tuple:
+    """Get user's language and translation settings"""
+    user_manager = UserDataManager(user_id)
+    await user_manager.load()
+    settings = user_manager.data.get("settings", {})
+    lang = settings.get("language", "en")
+    trans_lang = settings.get("translation_language", "both")
+    return lang, trans_lang
+
+
 @router.message(Command("learn"))
 async def cmd_learn(message: Message):
     """Handle /learn command"""
+    user_id = message.from_user.id
+    lang, _ = await get_user_settings(user_id)
+    
     await message.answer(
-        "📚 *Learning Mode*\n\nChoose what you'd like to learn:",
+        get_text("learn_menu_title", lang),
         parse_mode="Markdown",
-        reply_markup=get_learn_menu_keyboard()
+        reply_markup=get_learn_menu_keyboard(lang)
     )
 
 
 @router.callback_query(F.data == "menu:learn")
 async def show_learn_menu(callback: CallbackQuery):
     """Show learning menu"""
+    user_id = callback.from_user.id
+    lang, _ = await get_user_settings(user_id)
+    
     await callback.message.edit_text(
-        "📚 *Learning Mode*\n\nChoose what you'd like to learn:",
+        get_text("learn_menu_title", lang),
         parse_mode="Markdown",
-        reply_markup=get_learn_menu_keyboard()
+        reply_markup=get_learn_menu_keyboard(lang)
     )
     await callback.answer()
 
@@ -64,10 +82,13 @@ async def show_learn_menu(callback: CallbackQuery):
 async def back_to_learn_menu(callback: CallbackQuery, state: FSMContext):
     """Back to learn menu"""
     await state.clear()
+    user_id = callback.from_user.id
+    lang, _ = await get_user_settings(user_id)
+    
     await callback.message.edit_text(
-        "📚 *Learning Mode*\n\nChoose what you'd like to learn:",
+        get_text("learn_menu_title", lang),
         parse_mode="Markdown",
-        reply_markup=get_learn_menu_keyboard()
+        reply_markup=get_learn_menu_keyboard(lang)
     )
     await callback.answer()
 
@@ -77,10 +98,13 @@ async def back_to_learn_menu(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data == "learn:4000")
 async def learn_4000_select_level(callback: CallbackQuery):
     """Select level for learning"""
+    user_id = callback.from_user.id
+    lang, _ = await get_user_settings(user_id)
+    
     await callback.message.edit_text(
-        "📘 *4000 Essential English Words*\n\nSelect a level to learn:",
+        get_text("select_level", lang),
         parse_mode="Markdown",
-        reply_markup=get_level_selection_keyboard("learn")
+        reply_markup=get_level_selection_keyboard("learn", lang)
     )
     await callback.answer()
 
@@ -93,6 +117,8 @@ async def learn_select_unit(callback: CallbackQuery):
     page = int(parts[4]) if len(parts) > 4 and parts[3] == "page" else 0
     
     user_id = callback.from_user.id
+    lang, _ = await get_user_settings(user_id)
+    
     vocab_manager = VocabularyManager(user_id)
     await vocab_manager.initialize()
     
@@ -100,12 +126,13 @@ async def learn_select_unit(callback: CallbackQuery):
     progress = await vocab_manager.get_user_progress_for_level(level)
     
     await callback.message.edit_text(
-        f"📘 *Level {level}*\n\n"
-        f"📊 Progress: {progress['completion_rate']:.1f}%\n"
-        f"✅ Learned: {progress['learned']}/{progress['total_words']}\n\n"
-        f"Select a unit:",
+        get_text("level_progress", lang, 
+                 level=level, 
+                 rate=progress['completion_rate'],
+                 learned=progress['learned'],
+                 total=progress['total_words']),
         parse_mode="Markdown",
-        reply_markup=get_unit_selection_keyboard(level, "learn", page)
+        reply_markup=get_unit_selection_keyboard(level, "learn", page, lang=lang)
     )
     await callback.answer()
 
@@ -119,15 +146,15 @@ async def start_learning_unit(callback: CallbackQuery, state: FSMContext):
     unit = int(match.group(2))
     
     user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
     
     # Get words from the unit
     words = await get_unit_words(level, unit)
     
     if not words:
         await callback.message.edit_text(
-            f"❌ No words found for Level {level} Unit {unit}.\n\n"
-            "Please check if the word data is available.",
-            reply_markup=get_back_button("learn:4000")
+            get_text("error_no_words", lang, level=level, unit=unit),
+            reply_markup=get_back_button("learn:4000", lang)
         )
         await callback.answer()
         return
@@ -163,10 +190,10 @@ async def start_learning_unit(callback: CallbackQuery, state: FSMContext):
     word_id = create_word_id(level, unit, current_word_idx)
     
     await callback.message.edit_text(
-        f"📖 *Level {level} • Unit {unit}* (Word {current_word_idx + 1}/{len(words)})\n\n" +
-        format_word_for_display(word, show_answer=True),
+        get_text("word_counter", lang, level=level, unit=unit, current=current_word_idx + 1, total=len(words)) + "\n\n" +
+        format_word_for_display(word, show_answer=True, lang=lang, translation_lang=trans_lang),
         parse_mode="Markdown",
-        reply_markup=get_word_learning_keyboard(word_id)
+        reply_markup=get_word_learning_keyboard(word_id, lang)
     )
     await callback.answer()
 
@@ -199,7 +226,8 @@ async def word_unknown(callback: CallbackQuery, state: FSMContext):
     await user_manager.update_word_status(word_id, is_4000=True, correct=False)
     await user_manager.update_stats(correct=False)
     
-    await callback.answer(get_random_encouragement())
+    lang, _ = await get_user_settings(user_id)
+    await callback.answer(get_random_encouragement(lang))
     
     # Show next word
     await show_next_learning_word(callback, state)
@@ -213,12 +241,15 @@ async def next_word(callback: CallbackQuery, state: FSMContext):
 
 async def show_next_learning_word(callback: CallbackQuery, state: FSMContext):
     """Show the next word in learning session"""
+    user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
+    
     data = await state.get_data()
     
     if not data:
         await callback.message.edit_text(
-            "Session expired. Please start a new learning session.",
-            reply_markup=get_back_button("learn:4000")
+            get_text("error_generic", lang),
+            reply_markup=get_back_button("learn:4000", lang)
         )
         await callback.answer()
         return
@@ -232,13 +263,11 @@ async def show_next_learning_word(callback: CallbackQuery, state: FSMContext):
         # Unit completed
         await state.clear()
         await callback.message.edit_text(
-            f"🎉 *Congratulations!*\n\n"
-            f"You've completed Level {level} Unit {unit}!\n\n"
-            f"{get_random_motivation()}",
+            get_text("unit_complete", lang, unit=unit, level=level) + f"\n\n{get_random_motivation(lang)}",
             parse_mode="Markdown",
-            reply_markup=get_back_button("learn:4000")
+            reply_markup=get_back_button("learn:4000", lang)
         )
-        await callback.answer("Unit completed! 🎉")
+        await callback.answer("🎉")
         return
     
     # Get next word
@@ -252,10 +281,10 @@ async def show_next_learning_word(callback: CallbackQuery, state: FSMContext):
     await state.update_data(current_idx=current_idx)
     
     await callback.message.edit_text(
-        f"📖 *Level {level} • Unit {unit}* (Word {current_idx + 1}/{total_words})\n\n" +
-        format_word_for_display(word, show_answer=True),
+        get_text("word_progress", lang, level=level, unit=unit, current=current_idx + 1, total=total_words) + "\n\n" +
+        format_word_for_display(word, show_answer=True, lang=lang, translation_lang=trans_lang),
         parse_mode="Markdown",
-        reply_markup=get_word_learning_keyboard(word_id)
+        reply_markup=get_word_learning_keyboard(word_id, lang)
     )
     await callback.answer()
 
@@ -263,6 +292,9 @@ async def show_next_learning_word(callback: CallbackQuery, state: FSMContext):
 @router.callback_query(F.data.startswith("learn:example:"))
 async def show_example(callback: CallbackQuery):
     """Show word example"""
+    user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
+    
     word_id = callback.data.split(":")[-1]
     
     # Parse word ID
@@ -273,11 +305,11 @@ async def show_example(callback: CallbackQuery):
         words = await get_unit_words(parsed["level"], parsed["unit"])
         if words and parsed["word_index"] < len(words):
             word = words[parsed["word_index"]]
-            example = word.get("example", "No example available.")
+            example = word.get("example", get_text("no_example", lang))
             await callback.answer(f"📝 {example}", show_alert=True)
             return
     
-    await callback.answer("Example not available", show_alert=True)
+    await callback.answer(get_text("example_not_available", lang), show_alert=True)
 
 
 # ============ Custom Words ============
@@ -286,28 +318,30 @@ async def show_example(callback: CallbackQuery):
 async def show_custom_words(callback: CallbackQuery):
     """Show custom vocabulary"""
     user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
+    
     vocab_manager = VocabularyManager(user_id)
     await vocab_manager.initialize()
     
     words = await vocab_manager.get_custom_words()
     
-    if not words:
-        await callback.message.edit_text(
-            "✏️ *My Custom Words*\n\n"
-            "You haven't added any custom words yet.\n\n"
-            "Tap 'Add New Word' to start building your vocabulary!",
-            parse_mode="Markdown",
-            reply_markup=get_learn_menu_keyboard()
-        )
-    else:
-        word_list = "\n".join([f"• {w['word']}" for w in words[:10]])
-        await callback.message.edit_text(
-            f"✏️ *My Custom Words* ({len(words)} words)\n\n"
-            f"{word_list}\n"
-            f"{'...' if len(words) > 10 else ''}",
-            parse_mode="Markdown",
-            reply_markup=get_learn_menu_keyboard()
-        )
+    try:
+        if not words:
+            await callback.message.edit_text(
+                get_text("custom_words_empty", lang),
+                parse_mode="Markdown",
+                reply_markup=get_learn_menu_keyboard(lang)
+            )
+        else:
+            word_list = "\n".join([f"• {w['word']}" for w in words[:10]])
+            await callback.message.edit_text(
+                get_text("custom_words_list", lang, count=len(words), word_list=word_list, more="..." if len(words) > 10 else ""),
+                parse_mode="Markdown",
+                reply_markup=get_learn_menu_keyboard(lang)
+            )
+    except TelegramBadRequest as e:
+        if "message is not modified" not in str(e):
+            raise
     
     await callback.answer()
 
@@ -315,13 +349,15 @@ async def show_custom_words(callback: CallbackQuery):
 @router.callback_query(F.data == "learn:add")
 async def start_add_word(callback: CallbackQuery, state: FSMContext):
     """Start adding a new word"""
+    user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
+    
     await state.set_state(AddWordStates.waiting_for_word)
     
     await callback.message.edit_text(
-        "➕ *Add New Word*\n\n"
-        "Please send me the word you want to add:",
+        get_text("add_word_prompt", lang),
         parse_mode="Markdown",
-        reply_markup=get_add_word_keyboard()
+        reply_markup=get_add_word_keyboard(lang)
     )
     await callback.answer()
 
@@ -329,15 +365,18 @@ async def start_add_word(callback: CallbackQuery, state: FSMContext):
 @router.message(AddWordStates.waiting_for_word)
 async def receive_word(message: Message, state: FSMContext):
     """Receive the word to add"""
+    user_id = message.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
+    
     from utils.helpers import validate_word_input
     
     word = message.text.strip()
-    is_valid, error = validate_word_input(word)
+    is_valid, error = validate_word_input(word, lang)
     
     if not is_valid:
         await message.answer(
-            f"❌ {error}\n\nPlease try again:",
-            reply_markup=get_add_word_keyboard()
+            f"❌ {error}\n\n{get_text('try_again', lang)}",
+            reply_markup=get_add_word_keyboard(lang)
         )
         return
     
@@ -345,25 +384,27 @@ async def receive_word(message: Message, state: FSMContext):
     await state.set_state(AddWordStates.waiting_for_meaning)
     
     await message.answer(
-        f"✅ Word: *{word}*\n\n"
-        "Now send me the meaning/definition:",
+        get_text("add_word_meaning_prompt", lang, word=word),
         parse_mode="Markdown",
-        reply_markup=get_add_word_keyboard()
+        reply_markup=get_add_word_keyboard(lang)
     )
 
 
 @router.message(AddWordStates.waiting_for_meaning)
 async def receive_meaning(message: Message, state: FSMContext):
     """Receive the word meaning"""
+    user_id = message.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
+    
     from utils.helpers import validate_meaning_input
     
     meaning = message.text.strip()
-    is_valid, error = validate_meaning_input(meaning)
+    is_valid, error = validate_meaning_input(meaning, lang)
     
     if not is_valid:
         await message.answer(
-            f"❌ {error}\n\nPlease try again:",
-            reply_markup=get_add_word_keyboard()
+            f"❌ {error}\n\n{get_text('try_again', lang)}",
+            reply_markup=get_add_word_keyboard(lang)
         )
         return
     
@@ -371,21 +412,22 @@ async def receive_meaning(message: Message, state: FSMContext):
     await state.set_state(AddWordStates.waiting_for_example)
     
     await message.answer(
-        "📝 Great! Now send an example sentence.\n\n"
-        "(Or send /skip to skip this step)",
-        reply_markup=get_add_word_keyboard()
+        get_text("add_word_example_prompt", lang),
+        reply_markup=get_add_word_keyboard(lang)
     )
 
 
 @router.message(AddWordStates.waiting_for_example)
 async def receive_example(message: Message, state: FSMContext):
     """Receive example sentence"""
+    user_id = message.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
+    
     example = None if message.text.strip() == "/skip" else message.text.strip()
     
     await state.update_data(example=example)
     
     # Save the word
-    user_id = message.from_user.id
     data = await state.get_data()
     
     vocab_manager = VocabularyManager(user_id)
@@ -400,13 +442,9 @@ async def receive_example(message: Message, state: FSMContext):
     await state.clear()
     
     await message.answer(
-        f"✅ *Word Added Successfully!*\n\n"
-        f"📚 Word: *{data['word']}*\n"
-        f"📖 Meaning: {data['meaning']}\n"
-        f"💬 Example: {example or 'Not provided'}\n\n"
-        f"{get_random_motivation()}",
+        get_text("word_added_success", lang, word=data['word'], meaning=data['meaning'], example=example or get_text("not_provided", lang)) + f"\n\n{get_random_motivation(lang)}",
         parse_mode="Markdown",
-        reply_markup=get_learn_menu_keyboard()
+        reply_markup=get_learn_menu_keyboard(lang)
     )
 
 
@@ -416,6 +454,7 @@ async def receive_example(message: Message, state: FSMContext):
 async def start_review(callback: CallbackQuery, state: FSMContext):
     """Start review of due words"""
     user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
     
     user_manager = UserDataManager(user_id)
     await user_manager.load()
@@ -423,13 +462,15 @@ async def start_review(callback: CallbackQuery, state: FSMContext):
     due_words = await user_manager.get_words_due_for_review()
     
     if not due_words:
-        await callback.message.edit_text(
-            "✨ *All caught up!*\n\n"
-            "You don't have any words due for review right now.\n"
-            "Keep learning new words or check back later!",
-            parse_mode="Markdown",
-            reply_markup=get_learn_menu_keyboard()
-        )
+        try:
+            await callback.message.edit_text(
+                get_text("review_all_caught_up", lang),
+                parse_mode="Markdown",
+                reply_markup=get_learn_menu_keyboard(lang)
+            )
+        except TelegramBadRequest as e:
+            if "message is not modified" not in str(e):
+                raise
         await callback.answer()
         return
     
@@ -457,20 +498,23 @@ async def start_review(callback: CallbackQuery, state: FSMContext):
                 word["unit"] = parsed["unit"]
                 
                 await callback.message.edit_text(
-                    f"🔄 *Review* (1/{len(due_words)})\n\n" +
-                    format_word_card(word),
+                    get_text("review_progress", lang, current=1, total=len(due_words)) + "\n\n" +
+                    format_word_card(word, lang),
                     parse_mode="Markdown",
-                    reply_markup=get_flashcard_keyboard(word_id)
+                    reply_markup=get_flashcard_keyboard(word_id, lang)
                 )
                 await callback.answer()
                 return
     
-    await callback.answer("Error loading word")
+    await callback.answer(get_text("error_loading_word", lang))
 
 
 @router.callback_query(F.data.startswith("flash:show:"))
 async def show_flashcard_answer(callback: CallbackQuery, state: FSMContext):
     """Show the answer for a flashcard"""
+    user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
+    
     word_id = callback.data.split(":")[-1]
     
     from utils.helpers import parse_word_id
@@ -488,22 +532,24 @@ async def show_flashcard_answer(callback: CallbackQuery, state: FSMContext):
             current_idx = data.get("current_review_idx", 0)
             
             await callback.message.edit_text(
-                f"🔄 *Review* ({current_idx + 1}/{len(due_words)})\n\n" +
-                format_word_for_display(word, show_answer=True),
+                get_text("review_progress", lang, current=current_idx + 1, total=len(due_words)) + "\n\n" +
+                format_word_for_display(word, show_answer=True, lang=lang, translation_lang=trans_lang),
                 parse_mode="Markdown",
-                reply_markup=get_flashcard_response_keyboard(word_id)
+                reply_markup=get_flashcard_response_keyboard(word_id, lang)
             )
             await callback.answer()
             return
     
-    await callback.answer("Error showing answer")
+    await callback.answer(get_text("error_showing_answer", lang))
 
 
 @router.callback_query(F.data.startswith("flash:correct:"))
 async def flashcard_correct(callback: CallbackQuery, state: FSMContext):
     """User remembered the word"""
-    word_id = callback.data.split(":")[-1]
     user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
+    
+    word_id = callback.data.split(":")[-1]
     
     # Update word status
     user_manager = UserDataManager(user_id)
@@ -511,17 +557,19 @@ async def flashcard_correct(callback: CallbackQuery, state: FSMContext):
     await user_manager.update_word_status(word_id, is_4000=True, correct=True)
     await user_manager.update_stats(correct=True)
     
-    await callback.answer("✅ Great job!")
+    await callback.answer(get_text("great_job", lang))
     
     # Show next review word
-    await show_next_review_word(callback, state)
+    await show_next_review_word(callback, state, lang, trans_lang)
 
 
 @router.callback_query(F.data.startswith("flash:wrong:"))
 async def flashcard_wrong(callback: CallbackQuery, state: FSMContext):
     """User forgot the word"""
-    word_id = callback.data.split(":")[-1]
     user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
+    
+    word_id = callback.data.split(":")[-1]
     
     # Update word status
     user_manager = UserDataManager(user_id)
@@ -529,20 +577,20 @@ async def flashcard_wrong(callback: CallbackQuery, state: FSMContext):
     await user_manager.update_word_status(word_id, is_4000=True, correct=False)
     await user_manager.update_stats(correct=False)
     
-    await callback.answer(get_random_encouragement())
+    await callback.answer(get_random_encouragement(lang))
     
     # Show next review word
-    await show_next_review_word(callback, state)
+    await show_next_review_word(callback, state, lang, trans_lang)
 
 
-async def show_next_review_word(callback: CallbackQuery, state: FSMContext):
+async def show_next_review_word(callback: CallbackQuery, state: FSMContext, lang: str = "en", trans_lang: str = "both"):
     """Show the next word in review session"""
     data = await state.get_data()
     
     if not data or not data.get("review_mode"):
         await callback.message.edit_text(
-            "Session expired. Please start a new review session.",
-            reply_markup=get_learn_menu_keyboard()
+            get_text("session_expired", lang),
+            reply_markup=get_learn_menu_keyboard(lang)
         )
         return
     
@@ -553,11 +601,9 @@ async def show_next_review_word(callback: CallbackQuery, state: FSMContext):
         # Review completed
         await state.clear()
         await callback.message.edit_text(
-            f"🎉 *Review Complete!*\n\n"
-            f"You reviewed {len(due_words)} words.\n\n"
-            f"{get_random_motivation()}",
+            get_text("review_complete", lang, count=len(due_words)) + f"\n\n{get_random_motivation(lang)}",
             parse_mode="Markdown",
-            reply_markup=get_learn_menu_keyboard()
+            reply_markup=get_learn_menu_keyboard(lang)
         )
         return
     
@@ -578,12 +624,12 @@ async def show_next_review_word(callback: CallbackQuery, state: FSMContext):
             word["unit"] = parsed["unit"]
             
             await callback.message.edit_text(
-                f"🔄 *Review* ({current_idx + 1}/{len(due_words)})\n\n" +
-                format_word_card(word),
+                get_text("review_progress", lang, current=current_idx + 1, total=len(due_words)) + "\n\n" +
+                format_word_card(word, lang),
                 parse_mode="Markdown",
-                reply_markup=get_flashcard_keyboard(word_id)
+                reply_markup=get_flashcard_keyboard(word_id, lang)
             )
             return
     
     # Error case - skip to next
-    await show_next_review_word(callback, state)
+    await show_next_review_word(callback, state, lang, trans_lang)

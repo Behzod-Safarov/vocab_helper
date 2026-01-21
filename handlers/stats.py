@@ -18,15 +18,27 @@ from keyboards.inline import (
     get_level_stats_keyboard,
     get_back_button,
 )
+from locales import get_text
 import config
 
 router = Router()
+
+
+async def get_user_settings(user_id: int):
+    """Get user language and translation settings"""
+    user_manager = UserDataManager(user_id)
+    await user_manager.load()
+    settings = user_manager.data.get("settings", {})
+    lang = settings.get("language", "en")
+    trans_lang = settings.get("translation_language", "both")
+    return lang, trans_lang
 
 
 @router.message(Command("stats"))
 async def cmd_stats(message: Message):
     """Handle /stats command"""
     user_id = message.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
     
     user_manager = UserDataManager(user_id)
     await user_manager.load()
@@ -35,9 +47,9 @@ async def cmd_stats(message: Message):
     stats = tracker.get_overall_stats()
     
     await message.answer(
-        format_stats_message(stats),
+        format_stats_message(stats, lang),
         parse_mode="Markdown",
-        reply_markup=get_stats_menu_keyboard()
+        reply_markup=get_stats_menu_keyboard(lang)
     )
 
 
@@ -45,6 +57,7 @@ async def cmd_stats(message: Message):
 async def show_stats_menu(callback: CallbackQuery):
     """Show stats menu"""
     user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
     
     user_manager = UserDataManager(user_id)
     await user_manager.load()
@@ -53,9 +66,9 @@ async def show_stats_menu(callback: CallbackQuery):
     stats = tracker.get_overall_stats()
     
     await callback.message.edit_text(
-        format_stats_message(stats),
+        format_stats_message(stats, lang),
         parse_mode="Markdown",
-        reply_markup=get_stats_menu_keyboard()
+        reply_markup=get_stats_menu_keyboard(lang)
     )
     await callback.answer()
 
@@ -64,6 +77,7 @@ async def show_stats_menu(callback: CallbackQuery):
 async def show_overall_stats(callback: CallbackQuery):
     """Show overall statistics"""
     user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
     
     user_manager = UserDataManager(user_id)
     await user_manager.load()
@@ -72,9 +86,9 @@ async def show_overall_stats(callback: CallbackQuery):
     stats = tracker.get_overall_stats()
     
     await callback.message.edit_text(
-        format_stats_message(stats),
+        format_stats_message(stats, lang),
         parse_mode="Markdown",
-        reply_markup=get_stats_menu_keyboard()
+        reply_markup=get_stats_menu_keyboard(lang)
     )
     await callback.answer()
 
@@ -82,10 +96,13 @@ async def show_overall_stats(callback: CallbackQuery):
 @router.callback_query(F.data == "stats:levels")
 async def show_level_selection(callback: CallbackQuery):
     """Show level selection for progress"""
+    user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
+    
     await callback.message.edit_text(
-        "📘 *Level Progress*\n\nSelect a level to view progress:",
+        get_text("level_progress_title", lang),
         parse_mode="Markdown",
-        reply_markup=get_level_stats_keyboard()
+        reply_markup=get_level_stats_keyboard(lang)
     )
     await callback.answer()
 
@@ -95,6 +112,7 @@ async def show_level_progress(callback: CallbackQuery):
     """Show progress for a specific level"""
     level = int(callback.data.split(":")[-1])
     user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
     
     user_manager = UserDataManager(user_id)
     await user_manager.load()
@@ -103,9 +121,9 @@ async def show_level_progress(callback: CallbackQuery):
     progress = tracker.get_level_progress(level)
     
     await callback.message.edit_text(
-        format_level_progress(progress),
+        format_level_progress(progress, lang),
         parse_mode="Markdown",
-        reply_markup=get_back_button("stats:levels")
+        reply_markup=get_back_button("stats:levels", lang)
     )
     await callback.answer()
 
@@ -114,6 +132,7 @@ async def show_level_progress(callback: CallbackQuery):
 async def show_streak_info(callback: CallbackQuery):
     """Show streak information"""
     user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
     
     user_manager = UserDataManager(user_id)
     await user_manager.load()
@@ -122,9 +141,9 @@ async def show_streak_info(callback: CallbackQuery):
     streak_info = tracker.get_streak_info()
     
     await callback.message.edit_text(
-        format_streak_message(streak_info),
+        format_streak_message(streak_info, lang),
         parse_mode="Markdown",
-        reply_markup=get_back_button("menu:stats")
+        reply_markup=get_back_button("menu:stats", lang)
     )
     await callback.answer()
 
@@ -133,6 +152,7 @@ async def show_streak_info(callback: CallbackQuery):
 async def show_weak_words_stats(callback: CallbackQuery):
     """Show weak words statistics"""
     user_id = callback.from_user.id
+    lang, trans_lang = await get_user_settings(user_id)
     
     user_manager = UserDataManager(user_id)
     await user_manager.load()
@@ -141,24 +161,16 @@ async def show_weak_words_stats(callback: CallbackQuery):
     weak_summary = tracker.get_weak_words_summary()
     
     if weak_summary["total_weak"] == 0:
-        text = (
-            "✨ *Weak Words*\n\n"
-            "Great job! You don't have any weak words.\n\n"
-            "Keep practicing to maintain your knowledge!"
-        )
+        text = get_text("no_weak_words_stats", lang)
     else:
-        text = (
-            f"⚠️ *Weak Words Summary*\n\n"
-            f"Total weak words: *{weak_summary['total_weak']}*\n\n"
-        )
+        text = get_text("weak_words_summary", lang, count=weak_summary['total_weak'])
         
         if weak_summary["needs_attention"]:
-            text += "⚡ These words need your attention!\n"
-            text += "Consider taking a review test.\n"
+            text += "\n" + get_text("weak_words_attention", lang)
     
     await callback.message.edit_text(
         text,
         parse_mode="Markdown",
-        reply_markup=get_back_button("menu:stats")
+        reply_markup=get_back_button("menu:stats", lang)
     )
     await callback.answer()
