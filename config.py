@@ -5,7 +5,7 @@ import os
 
 # Bot Token - Get from @BotFather on Telegram
 # BOT_TOKEN = os.getenv("BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
-BOT_TOKEN = "7839287725:AAFMLZCqS8Db8DUNAYrTcfOHALO8pHQYBQs"
+BOT_TOKEN = "8382488484:AAG0puO_YjKH52rqtPeFfyij4S7L05JJoYo"
 
 # Data directories
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
