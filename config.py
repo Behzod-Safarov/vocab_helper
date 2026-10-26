@@ -5,7 +5,7 @@ import os
 
 # Bot Token - Get from @BotFather on Telegram
 # BOT_TOKEN = os.getenv("BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
-BOT_TOKEN = "8382488484:AAG0puO_YjKH52rqtPeFfyij4S7L05JJoYo"
+BOT_TOKEN = ""
 
 # Admin Settings - Add your Telegram user ID(s) here
 # You can get your ID by messaging @userinfobot on Telegram
